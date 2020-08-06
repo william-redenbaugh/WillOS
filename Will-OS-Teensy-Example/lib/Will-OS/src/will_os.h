@@ -3,6 +3,17 @@
 #include <Arduino.h>
 
 /*
+*   @brief Maximum amount of threads the Will-OS supports
+*   @notes Unless we transition to a linked list(which is unlikely), this will remain the max limit
+*/
+#define MAX_WILL_THREADS 128    
+
+/*
+*   @brief Default size of stack 0 for thread 0   
+*   @notes Should changed based
+*/
+
+/*
 *   @brief register stack frame saved by interrupt
 *   @notes Used so that when we get interrupts, we can revert back the original registers. 
 */ 
@@ -68,19 +79,68 @@ typedef struct{
   uint32_t fpscr;
 }context_switch_stack_t;
 
-enum will_os_system_state{
+/*
+*   @brief Enumerated state values of operating system. 
+*   @notes Even though it's in the header file, should otherwise only be used by operating system 
+*/
+enum will_os_system_state_t{
     WILL_OS_STARTED =       1, 
     WILL_OS_STOPPED =       2, 
     WILL_OS_FIRST_RUN =     3,
-    WILL_OS_UNINITIALIZED = 4 
+    WILL_OS_UNINITIALIZED = 0 
 };
 
-enum will_thread_state{
+/*
+*   @brief Enumerated state values of threads within the Will-OS operating system 
+*   @notes Even though it's saved in the header file, should otherwise be used by operating sytem 
+*/
+enum will_thread_state_t{
     WILL_THREAD_STATE_UNITIALIZED = 1, 
     WILL_THREAD_STATE_RUNNING =     2, 
     WILL_THREAD_STATE_ENDING =      3, 
     WILL_THREAD_STATE_ENDED =       4, 
     WILL_THREAD_STATE_SUSPENDED =   5
 };
+
+/*
+*   @brief Struct that contains information for each thread
+*   @notes Used to deal with thread context switching
+*/
+typedef struct{
+    // Size of stack
+    uint32_t stack_size; 
+    // Stack pointer. 
+    uint8_t *stack = 0; 
+    int my_stack; 
+    // Where we save all our registers for context switching 
+    context_switch_stack_t register_contexts; 
+    // Flags for dealing with thread 
+    volatile will_thread_state_t flags = WILL_THREAD_STATE_UNITIALIZED; 
+    // Where are we in the program so far
+    void *sp; 
+    // Thread ticks 
+    int ticks; 
+}thread_t; 
+
+/*
+*   @brief Used to startup the Will-OS "Kernel" of sorts
+*   @notes Must be called before you do any multithreading with the willos kernel
+*   @params none
+*   @returns none
+*/
+void will_os_init(void);
+
+/*
+*   @brief Intializes the unused General Purpose Timers in the Teensy 4. 
+*   @notes if we can't set this up, then currently Teensy 4 will not initialize Will-OS
+*   @params microseconds between each context switch
+*/
+bool t4_unused_gpt_init(unsigned int microseconds);
+
+/*
+*   @brief Stack space used by will-os. 
+*   @notes In order to generate a thread, you need to have allocated stack space first!
+*/
+typedef uint8_t will_os_stack_t;
 
 #endif 
