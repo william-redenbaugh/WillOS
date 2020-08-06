@@ -46,6 +46,11 @@ const int WILL_OS_DEFAULT_TICKS = 10;
 const int WILL_OS_DEFAULT_STACK0_SIZE = 16384;
 
 /*
+*   @brief Default stack size of any thread should non be provided
+*/
+const int WILL_OS_DEFAULT_STACK_SIZE = 2048;
+
+/*
  * @brief Use unused Teensy4 GPT timers for context switching
  */
 extern "C" void unused_interrupt_vector(void);
@@ -157,12 +162,13 @@ extern "C"{
 
 /*
 *   @brief subroutine called from assembly code to load next thread's context and registers
-*   @notes Only to be used in assembly context switching code 
+*   @notes Only to be used in assembly context switching code. Was loadNextThread in TeensyThreads 
 *   @params none
 *   @returns none
 */
-void load_next_thread(void){
-
+void load_next_thread_asm_call(void){
+  // Wraps around this
+  will_os_load_next_thread();
 }
 
 /*
@@ -195,6 +201,18 @@ int current_tick_count;
 *   @notes in TeensyThreads this was currentSP
 */
 void *current_stack_pointer; 
+
+/*
+* @brief maximum value that stack pointer can be
+* @notes in TeensyThreads this was currentMSP
+*/
+int current_max_stack_pointer; 
+
+/*
+* @notes inherited from TeensyThreads as currentSave
+* @notes My current assumption is that this is the current program counter saved state of the thread
+*/
+void *current_save; 
 
 }
 
@@ -452,7 +470,104 @@ extern void will_os_thread_delay(int millisecond){
 * @param int stack_size(size of the allocated threadstack)
 * @returns none
 */
-extern void will_os_add_thread(will_os_thread_func_t thread, void *arg, void* stack, int stack_size){
+extern will_os_thread_id_t will_os_add_thread(will_os_thread_func_t thread, void *arg, void* stack, int stack_size){
+  // Shutoff ISR and kernel stuff for a moment
+  int old_state = will_os_system_stop();
+  if(stack_size == -1)
+    stack_size = WILL_OS_DEFAULT_STACK_SIZE; 
 
+  for(uint32_t i = 1; i < MAX_WILL_THREADS; i++){
+    if(system_threads[i] == NULL)
+      system_threads[i] = new thread_t;
+    
+    // If the thread hasn't been initialized, or if thread has been suspended
+    if(system_threads[i]->flags == WILL_THREAD_STATE_UNITIALIZED || system_threads[i]->flags == WILL_THREAD_STATE_ENDED){
+      thread_t *this_thread = system_threads[i]; 
+      
+      // If there was already a thread stack here, or if thread stack
+      // Was allocated on Heap by this function call, we delete the previous stack
+      // And free up the memory. 
+      if(this_thread->stack && this_thread->my_stack)
+        delete[] this_thread->stack;
+      
+      // If we didn't point 
+      if(stack == NULL){
+        // Allocate new stack onto the heap
+        stack = new uint8_t[stack_size];
+        // Since this was allocated in this thread, we save that flag
+        // Letting the program know it was statically allocated previously
+        this_thread->my_stack = 1; 
+      }
+      else
+        this_thread->my_stack = 0; 
+
+      // Saving the stack pointer on the thread reference
+      this_thread->stack = (uint8_t*)stack;
+      // Saving the size of our stack on the thread reference
+      this_thread->stack_size = stack_size; 
+      void *psp = will_os_init_threadstack(thread, arg, this_thread->stack, this_thread->stack_size);
+      // Setting up thread registers
+      this_thread->sp = psp; 
+      
+      // Saving the default tick frequency
+      this_thread->ticks = WILL_OS_DEFAULT_TICKS; 
+      // Set thread flag state to running
+      this_thread->flags = WILL_THREAD_STATE_RUNNING;
+      // Setting a specific register to this 
+      this_thread->register_contexts.lr = 0xFFFFFFF9;
+      // Updating current state to the old state
+      current_state = old_state; 
+      thread_count++; 
+      if(old_state == WILL_OS_STARTED || old_state == WILL_OS_FIRST_RUN)
+        will_os_system_start(old_state);
+      // Returning the thread id
+      return i; 
+    }
+  } 
+
+  // Restarting the OS kernel, if we couldn't find any space then we weren't able to return
+  // A working thread handler since the thread wasn't initialized 
+  if(old_state == WILL_OS_STARTED)
+    will_os_system_start(old_state);
+  return -1; 
+}
+
+/*
+*   @brief Increments to next thread for context switching
+*   @notes Not to be called externally!
+*   @params  none
+*   @returns none
+*/
+extern void will_os_load_next_thread(void){
+  current_thread->sp = current_stack_pointer;
+  
+  // Stack overflow ISR is triggered if we overflow any thread except thread 0(main thread)
+  // Allows for an extra 8 bytes for a call to ISR and one call/variables
+  if(current_thread_id && (uint8_t*)current_thread->sp - current_thread->stack <= 8){
+    stack_overflow_isr();
+  }
+
+  // Search for next running thread
+  while(1){
+    // Increment next thread.
+    current_thread_id++; 
+    if(current_thread_id >= MAX_WILL_THREADS){
+      // Thread 0 is MSP; always active so return.
+      current_thread_id = 0; 
+      break;
+    }
+    // If we find a thread to activate, we set to that thread. 
+    if((system_threads[current_thread_id] != NULL) && system_threads[current_thread_id]->flags == WILL_THREAD_STATE_RUNNING)
+      break;
+  }
+
+  // Set rest of current thread information for context switching in place
+  current_tick_count = system_threads[current_thread_id]->ticks; 
+  // Saving the register contexts including program counter. 
+  current_save = &system_threads[current_thread_id]->register_contexts;
+  // Saving current maximum stack pointer
+  current_max_stack_pointer = (current_thread_id == 0 ? 1: 0);
+  // Current Stack Pointer
+  current_stack_pointer = system_threads[current_thread_id]->sp; 
 }
 #endif 

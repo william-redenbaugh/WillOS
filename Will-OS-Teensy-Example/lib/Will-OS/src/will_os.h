@@ -103,6 +103,12 @@ enum will_thread_state_t{
 };
 
 /*
+*   @brief thread id that we can use to control thread
+*   @notes Should you need to stop, start, end, begin new threads, make sure you keep this saved somewhere
+*/
+typedef int will_os_thread_id_t;
+
+/*
 *   @brief Struct that contains information for each thread
 *   @notes Used to deal with thread context switching
 */
@@ -110,9 +116,10 @@ typedef struct{
     // Size of stack
     uint32_t stack_size; 
     // Stack pointer. 
-    uint8_t *stack = 0; 
-    int my_stack; 
-    // Where we save all our registers for context switching 
+    uint8_t *stack = 0;
+    // Whether or not stack was allocated by thread creation function 
+    int my_stack = 0; 
+    // Where we save all our registers for context switching .
     context_switch_stack_t register_contexts; 
     // Flags for dealing with thread 
     volatile will_thread_state_t flags = WILL_THREAD_STATE_UNITIALIZED; 
@@ -121,7 +128,7 @@ typedef struct{
     // Thread ticks 
     int ticks;
     // Uninitialized thread ID.
-    int thread_id = -1;  
+    will_os_thread_id_t thread_id = -1;  
 }thread_t; 
 
 /*
@@ -164,6 +171,7 @@ bool t4_unused_gpt_init(unsigned int microseconds);
 */
 void will_os_init(void);
 
+
 /*
 *   @brief Allows us to change the Will-OS System tick. 
 *   @note If you want more precision in your system ticks, take care of this here. 
@@ -197,11 +205,41 @@ extern int will_os_system_start(int previous_state);
 extern void will_os_thread_del_process(void);
 
 /*
-*   @brief Allows us to change the Will-OS System tick. 
-*   @note If you want more precision in your system ticks, take care of this here. 
-*   @params int tick_microseconds
+*   @brief Given a thread pointer, arguements towards thread pointer, stack address to thread pointer, and stack size, we can setup the isr interrupts for thread. 
+*   @notes Called whenever we add another thread. 
+*   @params will_os_thread_func_t thread pointer to program counter start of thread
+*   @params void *arg address pointer of arguements to pass into will-os
+*   @params void *stack_addr pointer to the begining of the stack address. 
+*   @params int stack_size size of the stack for this thread
+*   @returns pointer to the new threadstack. 
+*/
+extern void* will_os_init_threadstack(will_os_thread_func_t thread, void *arg, void *stack_addr, int stack_size);
+
+/*
+* @brief Sleeps the thread through a hypervisor call. 
+* @notes Checks in roughly every milliscond until thread is ready to start running again
+* @params int milliseconds since last system tick
+* @returns none
+*/
+extern void will_os_thread_delay(int millisecond);
+
+/*
+* @brief Adds a thread to Will-OS Kernel
+* @notes Paralelism at it's finest!
+* @params will_os_thread_func_t thread(pointer to thread function call begining of program counter)
+* @params void *arg(pointer arguement to parameters for thread)
+* @param void *stack(pointer to begining of thread stack)
+* @param int stack_size(size of the allocated threadstack)
+* @returns none
+*/
+extern will_os_thread_id_t will_os_add_thread(will_os_thread_func_t thread, void *arg, void* stack, int stack_size);
+
+/*
+*   @brief Increments to next thread for context switching
+*   @notes Not to be called externally!
+*   @params  none
 *   @returns none
 */
-extern bool will_os_change_systick(int microseconds);
+extern void will_os_load_next_thread(void);
 
 #endif 
