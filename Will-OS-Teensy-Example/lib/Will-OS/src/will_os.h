@@ -119,7 +119,9 @@ typedef struct{
     // Where are we in the program so far
     void *sp; 
     // Thread ticks 
-    int ticks; 
+    int ticks;
+    // Uninitialized thread ID.
+    int thread_id = -1;  
 }thread_t; 
 
 /*
@@ -142,5 +144,25 @@ bool t4_unused_gpt_init(unsigned int microseconds);
 *   @notes In order to generate a thread, you need to have allocated stack space first!
 */
 typedef uint8_t will_os_stack_t;
+
+/*
+*   @brief Thread function program counter pointer
+*   @notes This is the type of functio you pass into will-os for thread creation
+*/
+typedef void (*will_os_thread_func_t)(void*);
+
+/*
+*   @brief Will OS ISR function stuff, used for interrupt service routines 
+*   @notes currrently used for gpt timer configuration
+*/
+typedef void (*will_os_isr_func_t)();
+
+/*
+*   @brief Allows us to change the Will-OS System tick. 
+*   @note If you want more precision in your system ticks, take care of this here. 
+*   @params int tick_microseconds
+*   @returns none
+*/
+extern bool will_os_change_systick(int microseconds);
 
 #endif 
