@@ -76,7 +76,7 @@ typedef struct{
     uint32_t s29;
     uint32_t s30;
     uint32_t s31;
-  uint32_t fpscr;
+    uint32_t fpscr;
 }context_switch_stack_t;
 
 /*
@@ -125,21 +125,6 @@ typedef struct{
 }thread_t; 
 
 /*
-*   @brief Used to startup the Will-OS "Kernel" of sorts
-*   @notes Must be called before you do any multithreading with the willos kernel
-*   @params none
-*   @returns none
-*/
-void will_os_init(void);
-
-/*
-*   @brief Intializes the unused General Purpose Timers in the Teensy 4. 
-*   @notes if we can't set this up, then currently Teensy 4 will not initialize Will-OS
-*   @params microseconds between each context switch
-*/
-bool t4_unused_gpt_init(unsigned int microseconds);
-
-/*
 *   @brief Stack space used by will-os. 
 *   @notes In order to generate a thread, you need to have allocated stack space first!
 */
@@ -156,6 +141,60 @@ typedef void (*will_os_thread_func_t)(void*);
 *   @notes currrently used for gpt timer configuration
 */
 typedef void (*will_os_isr_func_t)();
+
+/*
+*   @brief Allows us to change the Will-OS System tick. 
+*   @note If you want more precision in your system ticks, take care of this here. 
+*   @params int tick_microseconds
+*   @returns none
+*/
+
+/*
+*   @brief Intializes the unused General Purpose Timers in the Teensy 4. 
+*   @notes if we can't set this up, then currently Teensy 4 will not initialize Will-OS
+*   @params microseconds between each context switch
+*/
+bool t4_unused_gpt_init(unsigned int microseconds);
+
+/*
+*   @brief Used to startup the Will-OS "Kernel" of sorts
+*   @notes Must be called before you do any multithreading with the willos kernel
+*   @params none
+*   @returns none
+*/
+void will_os_init(void);
+
+/*
+*   @brief Allows us to change the Will-OS System tick. 
+*   @note If you want more precision in your system ticks, take care of this here. 
+*   @params int tick_microseconds
+*   @returns none
+*/
+extern bool will_os_change_systick(int microseconds);
+
+/*
+*   @brief Stops the entire Will-OS Kernel
+*   @notes Try to avoid stopping the kernel whenever possible. 
+*   @params none
+*   @returns int original state of machine
+*/
+extern int will_os_system_stop();
+
+/*
+*   @brief Starts the entire Will-OS Kernel
+*   @notes Try to avoid stopping the kernel whenever possible. 
+*   @params none
+*   @returns int original state of machine
+*/
+extern int will_os_system_start(int previous_state);
+
+/*
+*   @brief  deletes a thread from the system. 
+*   @notes  be careful, since this also ends the system kernel and isr's
+*   @params none
+*   @return none
+*/
+extern void will_os_thread_del_process(void);
 
 /*
 *   @brief Allows us to change the Will-OS System tick. 

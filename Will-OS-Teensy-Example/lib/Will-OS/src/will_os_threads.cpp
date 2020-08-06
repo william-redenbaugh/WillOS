@@ -7,7 +7,7 @@
 *   @brief Ensures that all memory access appearing before this program point are taken care of.   
 *   @notes To understand more, visit: https://www.keil.com/support/man/docs/armasm/armasm_dom1361289870356.htm
 */
-#define flush_cpu_pipeline() __asm__ volatile("DMB");
+#define flush_cpu_mem_pipeline() __asm__ volatile("DMB");
 
 /*
 *   @brief Supervisor call number, used for yielding the program
@@ -213,11 +213,13 @@ extern "C" void stack_overflow_isr(void)       __attribute__ ((weak, alias("stac
 
 /*
 *   @brief Current thread that we have context of.
+*   @notes This was contained in TeensyThreads' Thread class as current_thread
 */
 int current_thread_id; 
 
 /*
 *   @brief Keeps track of how many threads we have at the moment
+*   @notes This was contained in TeensyThreads' Thread class as thread_count
 */
 int thread_count; 
 
@@ -231,11 +233,16 @@ int thread_count;
  * is short and simple, it should only use those registers. In the
  * future, this should be coded in assembly to make sure.
  */
-
 extern volatile uint32_t systick_millis_count;
 extern "C" void systick_isr();
-void __attribute((naked, noinline)) threads_systick_isr(void)
-{
+
+/*
+* @brief Pushes our system tick isr registers onto the stack, then puts them back on
+* @notes  inherited from teensythreads. 
+* @params none
+* @returns none
+*/
+void __attribute((naked, noinline)) threads_systick_isr(void){
   if (save_systick_isr) {
     asm volatile("push {r0-r4,lr}");
     (save_systick_isr)();
@@ -244,7 +251,7 @@ void __attribute((naked, noinline)) threads_systick_isr(void)
 
   // TODO: Teensyduino 1.38 calls MillisTimer::runFromTimer() from SysTick
   if (current_use_systick) {
-    // we branch in order to preserve LR and the stack
+    // We branch in order to preserve LR and the stack.
     __asm volatile("b context_switch");
   }
   __asm volatile("bx lr");
@@ -271,6 +278,7 @@ void __attribute((naked, noinline)) threads_svcall_isr(void){
                  "MRSNE r0, psp \n");
   register unsigned int *rsp __asm("r0");
   unsigned int svc = ((uint8_t*)rsp[6])[-2];
+  // 
   if (svc == WILL_OS_SVC_NUM) {
     __asm volatile("b context_switch_direct");
   }
@@ -321,7 +329,6 @@ void will_os_init(void){
     t4_unused_gpt_init(1000);
 }
 
-
 /*
 *   @brief Allows us to change the Will-OS System tick. 
 *   @note If you want more precision in your system ticks, take care of this here. 
@@ -339,9 +346,14 @@ extern bool will_os_change_systick(int microseconds){
 *   @returns int original state of machine
 */
 extern int will_os_system_stop(){
+    // Disable the gtp timer 
     __disable_irq();
+
+    // Stops the will-os kernel, sets state. 
     int old_state = current_state;
     current_state = WILL_OS_STOPPED;
+
+    // Renable the gtp timer 
     __enable_irq();
     return old_state;
 }
@@ -353,14 +365,94 @@ extern int will_os_system_stop(){
 *   @returns int original state of machine
 */
 extern int will_os_system_start(int previous_state){
+    // Disable the gtp timer
     __disable_irq();
+    
+    // Clean up states. 
     int old_state = current_state;
     if(previous_state == -1 )
         previous_state = WILL_OS_STARTED;
-
     current_state = previous_state;
+
+    // Renable the gtp timer. 
     __enable_irq();
     return old_state;
 }
 
+/*
+*   @brief  deletes a thread from the system. 
+*   @notes  be careful, since this also ends the system kernel and isr's
+*   @params none
+*   @return none
+*/
+extern void will_os_thread_del_process(void){
+  // Stopping the Will-OS system
+  int old_state = will_os_system_stop();
+  
+  // Ptr to the thread we are using 
+  thread_t *self_thread = system_threads[current_thread_id];
+  
+  // We are decrementing a thread
+  thread_count--; 
+  
+  // Setting our current thread to an "ended" state
+  self_thread->flags = WILL_THREAD_STATE_ENDED;
+
+  // Restart the will-os kernel 
+  will_os_system_start(old_state);
+  
+  // Just keep sitting until context change has been called by ISR again. 
+  while(1); 
+}
+
+/*
+*   @brief Given a thread pointer, arguements towards thread pointer, stack address to thread pointer, and stack size, we can setup the isr interrupts for thread. 
+*   @notes Called whenever we add another thread. 
+*   @params will_os_thread_func_t thread pointer to program counter start of thread
+*   @params void *arg address pointer of arguements to pass into will-os
+*   @params void *stack_addr pointer to the begining of the stack address. 
+*   @params int stack_size size of the stack for this thread
+*   @returns pointer to the new threadstack. 
+*/
+extern void* will_os_init_threadstack(will_os_thread_func_t thread, void *arg, void *stack_addr, int stack_size){
+  isr_stack_t *process_frame = (isr_stack_t*)((uint8_t*)stack_addr + stack_size - sizeof(isr_stack_t) - 8);
+  process_frame->r0 = (uint32_t)arg;
+  process_frame->r1 = 0;
+  process_frame->r2 = 0;
+  process_frame->r3 = 0;
+  process_frame->r12 = 0;
+  process_frame->lr = (uint32_t)will_os_thread_del_process;
+  process_frame->pc = ((uint32_t)thread);
+  process_frame->xpsr = 0x1000000;
+  uint8_t *ret = (uint8_t*)process_frame;
+  // ret -= sizeof(software_stack_t); // uncomment this if we are saving R4-R11 to the stack
+  return (void*)ret;
+}
+
+/*
+* @brief Sleeps the thread through a hypervisor call. 
+* @notes Checks in roughly every milliscond until thread is ready to start running again
+* @params int milliseconds since last system tick
+* @returns none
+*/
+extern void will_os_thread_delay(int millisecond){
+  int start_del = millis();
+  // So let the hypervisor take us away from this thread, and check 
+  // Each millisecond 
+  while((int)millis() - start_del < millisecond)
+    will_os_yield();
+}
+
+/*
+* @brief Adds a thread to Will-OS Kernel
+* @notes Paralelism at it's finest!
+* @params will_os_thread_func_t thread(pointer to thread function call begining of program counter)
+* @params void *arg(pointer arguement to parameters for thread)
+* @param void *stack(pointer to begining of thread stack)
+* @param int stack_size(size of the allocated threadstack)
+* @returns none
+*/
+extern void will_os_add_thread(will_os_thread_func_t thread, void *arg, void* stack, int stack_size){
+
+}
 #endif 
