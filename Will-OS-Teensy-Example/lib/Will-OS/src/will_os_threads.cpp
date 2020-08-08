@@ -1,7 +1,12 @@
+/*
+* By: William Redenbuagh
+* Heavily Derived from TeensyThreads by Fernando Trias. Many pieces of the code are 1:1. So you have that guy to thank!
+*/
 #include "will_os.h"
 
 // Currenly the only platform supported by Will-OS is the Teensy 4
 #ifdef __IMXRT1062__
+
 
 /*
 *   @brief Ensures that all memory access appearing before this program point are taken care of.   
@@ -18,7 +23,7 @@ const int WILL_OS_SVC_NUM = 33;
 *   @brief allows our program to "yield" out of current subroutine
 *   @notes 
 */
-void will_os_yield(void){
+extern "C" void will_os_yield(void){
     __asm volatile("svc %0" : : "i"(WILL_OS_SVC_NUM));
 }
 
@@ -31,14 +36,14 @@ const int WILL_OS_SVC_NUM_ACTIVE = 34;
 *   @brief allows our program to "yield" out of current subroutine
 *   @notes 
 */
-void will_os_yield_start(void){
+extern "C" void will_os_yield_start(void){
     __asm volatile("svc %0" : : "i"(WILL_OS_SVC_NUM_ACTIVE));
 }
 
 /*
 *   @brief Default amount of ticks
 */
-const int WILL_OS_DEFAULT_TICKS = 10; 
+int WILL_OS_DEFAULT_TICKS = 10; 
 
 /*
 *   @brief Default stack size of thread zero, set to 2^14 bytes
@@ -48,7 +53,7 @@ const int WILL_OS_DEFAULT_STACK0_SIZE = 16384;
 /*
 *   @brief Default stack size of any thread should non be provided
 */
-const int WILL_OS_DEFAULT_STACK_SIZE = 2048;
+int WILL_OS_DEFAULT_STACK_SIZE = 2048;
 
 /*
  * @brief Use unused Teensy4 GPT timers for context switching
@@ -62,7 +67,7 @@ extern "C" void unused_interrupt_vector(void);
 static void __attribute((naked, noinline)) gpt1_isr() {
   GPT1_SR |= GPT_SR_OF1;                // Clear set bit.
   __asm volatile ("dsb");               // See github bug #20 by manitou48.
-  __asm volatile("b context_switch");   // Branch to context switch assembly code. 
+  __asm volatile("b will_os_context_switch");   // Branch to context switch assembly code. 
 }
 
 /*
@@ -72,7 +77,7 @@ static void __attribute((naked, noinline)) gpt1_isr() {
 static void __attribute((naked, noinline)) gpt2_isr() {
   GPT2_SR |= GPT_SR_OF1;                // Clear set bit.
   __asm volatile ("dsb");               // see github bug #20 by manitou48
-  __asm volatile("b context_switch");   // Branch to context switch assembly code.
+  __asm volatile("b will_os_context_switch");   // Branch to context switch assembly code.
 }
 
 /*
@@ -139,26 +144,15 @@ bool t4_unused_gpt_init(unsigned int microseconds){
 }
 
 /*
-* @brief Main Thread zero stack. 
-*/
-extern unsigned long _estack; 
-
-/*
-*   @brief 
-*/
-will_os_isr_func_t save_systick_isr; 
-
-/*
-*   @brief
-*/
-will_os_isr_func_t save_svcall_isr; 
-
-/*
 *   @brief Pointer array to all the system threads
 */
 thread_t *system_threads[MAX_WILL_THREADS];
 
 extern "C"{
+
+void will_os_context_switch_pit_isr();
+
+volatile uint32_t *will_os_context_timer_flag;
 
 /*
 *   @brief subroutine called from assembly code to load next thread's context and registers
@@ -184,6 +178,22 @@ int current_state = WILL_OS_UNINITIALIZED;
 thread_t *current_thread; 
 
 /*
+* @brief Main Thread zero stack. 
+*/
+extern unsigned long _estack; 
+
+/*
+*   @brief interrupt service routine that deals with saving the system tick
+*/
+will_os_isr_func_t save_systick_isr; 
+
+/*
+*   @brief saving the supervisor call interrupt service routine
+*/
+will_os_isr_func_t save_svcall_isr; 
+
+
+/*
 *   @brief Current System Tick   
 *   @notes In TeensyThreads this was currentUseSystick for the gpt timer
 */
@@ -193,7 +203,7 @@ int current_use_systick;
 *   @brief Current count of system tick
 *   @notes in TeensyThreads this was currentCount
 */
-int current_tick_count; 
+int current_tick_count = 10; 
 
 /*
 *   @brief Current program thread stack pointer 
@@ -220,20 +230,20 @@ void *current_save;
 *   @brief If our current thread's stack overflows, then we kill the thread
 *   @notes Please try your best to void this behavior. 
 */
-extern "C" void stack_overflow_default_isr() { 
+extern "C" void will_os_stack_overflow_default_isr() { 
   current_thread->flags = WILL_THREAD_STATE_ENDED;
 }
 
 /*
 *   @notes inherited from teensyThread, seems to link to the above function
 */
-extern "C" void stack_overflow_isr(void)       __attribute__ ((weak, alias("stack_overflow_default_isr")));
+extern "C" void will_os_stack_overflow_isr(void)       __attribute__ ((weak, alias("will_os_stack_overflow_default_isr")));
 
 /*
 *   @brief Current thread that we have context of.
 *   @notes This was contained in TeensyThreads' Thread class as current_thread
 */
-int current_thread_id; 
+int current_thread_id = 0; 
 
 /*
 *   @brief Keeps track of how many threads we have at the moment
@@ -260,7 +270,7 @@ extern "C" void systick_isr();
 * @params none
 * @returns none
 */
-void __attribute((naked, noinline)) threads_systick_isr(void){
+extern "C" void __attribute((naked, noinline)) will_os_threads_systick_isr(void){
   if (save_systick_isr) {
     asm volatile("push {r0-r4,lr}");
     (save_systick_isr)();
@@ -270,7 +280,7 @@ void __attribute((naked, noinline)) threads_systick_isr(void){
   // TODO: Teensyduino 1.38 calls MillisTimer::runFromTimer() from SysTick
   if (current_use_systick) {
     // We branch in order to preserve LR and the stack.
-    __asm volatile("b context_switch");
+    __asm volatile("b will_os_context_switch");
   }
   __asm volatile("bx lr");
 }
@@ -281,7 +291,7 @@ void __attribute((naked, noinline)) threads_systick_isr(void){
 *   @params none
 *   @returns none
 */
-void __attribute((naked, noinline)) threads_svcall_isr(void){
+extern "C" void __attribute((naked, noinline)) will_os_threads_svcall_isr(void){
   if (save_svcall_isr) {
     asm volatile("push {r0-r4,lr}");
     (*save_svcall_isr)();
@@ -298,11 +308,11 @@ void __attribute((naked, noinline)) threads_svcall_isr(void){
   unsigned int svc = ((uint8_t*)rsp[6])[-2];
   // 
   if (svc == WILL_OS_SVC_NUM) {
-    __asm volatile("b context_switch_direct");
+    __asm volatile("b will_os_context_switch_direct");
   }
   else if (svc == WILL_OS_SVC_NUM_ACTIVE) {
     current_state = WILL_OS_STARTED;
-    __asm volatile("b context_switch_direct_active");
+    __asm volatile("b will_os_context_switch_direct_active");
   }
   __asm volatile("bx lr");
 }
@@ -318,12 +328,21 @@ inline void init_thread_zero(void){
     // Should be done otherwise 
     for(int i = 0; i < MAX_WILL_THREADS; i++)
         system_threads[i] = NULL;
-    
     // Initializes our first thread. 
     system_threads[0] = new thread_t;
+    current_thread = system_threads[0];
+    current_save = &system_threads[0]->register_contexts; 
+    current_max_stack_pointer = 1; 
+    current_stack_pointer = 0; 
+    current_tick_count = WILL_OS_DEFAULT_TICKS; 
+    current_state = WILL_OS_FIRST_RUN; 
+
     system_threads[0]->flags = WILL_THREAD_STATE_RUNNING;
     system_threads[0]->ticks = WILL_OS_DEFAULT_TICKS; 
+    system_threads[0]->stack = (uint8_t*)&_estack - WILL_OS_DEFAULT_STACK0_SIZE;
     system_threads[0]->stack_size = WILL_OS_DEFAULT_STACK0_SIZE;
+
+    Serial.println("initialized thread zero!");
 }
 
 /*
@@ -339,12 +358,15 @@ void will_os_init(void){
     // Tells Teensy4 to Commandeer SVCall and use GTP1 Interrupt
     save_svcall_isr = _VectorsRam[11];
     if(save_svcall_isr == unused_interrupt_vector)
-        _VectorsRam[11] = threads_svcall_isr;
+      save_svcall_isr = 0; 
+      
+    _VectorsRam[11] = will_os_threads_svcall_isr;
     
     current_use_systick = 0; 
     
     // Initialize unused GTP timer. 
-    t4_unused_gpt_init(1000);
+    if(t4_unused_gpt_init(1000))
+      Serial.println("GPT timer setup properly!");
 }
 
 /*
@@ -382,7 +404,7 @@ extern int will_os_system_stop(){
 *   @params none
 *   @returns int original state of machine
 */
-extern int will_os_system_start(int previous_state){
+extern int will_os_system_start(int previous_state = -1){
     // Disable the gtp timer
     __disable_irq();
     
@@ -434,6 +456,7 @@ extern void will_os_thread_del_process(void){
 */
 extern void* will_os_init_threadstack(will_os_thread_func_t thread, void *arg, void *stack_addr, int stack_size){
   isr_stack_t *process_frame = (isr_stack_t*)((uint8_t*)stack_addr + stack_size - sizeof(isr_stack_t) - 8);
+  // Clearing up and setting all the registers. 
   process_frame->r0 = (uint32_t)arg;
   process_frame->r1 = 0;
   process_frame->r2 = 0;
@@ -476,7 +499,7 @@ extern will_os_thread_id_t will_os_add_thread(will_os_thread_func_t thread, void
   if(stack_size == -1)
     stack_size = WILL_OS_DEFAULT_STACK_SIZE; 
 
-  for(uint32_t i = 1; i < MAX_WILL_THREADS; i++){
+  for(int i = 1; i < MAX_WILL_THREADS; i++){
     if(system_threads[i] == NULL)
       system_threads[i] = new thread_t;
     
@@ -491,7 +514,7 @@ extern will_os_thread_id_t will_os_add_thread(will_os_thread_func_t thread, void
         delete[] this_thread->stack;
       
       // If we didn't point 
-      if(stack == NULL){
+      if(stack == 0){
         // Allocate new stack onto the heap
         stack = new uint8_t[stack_size];
         // Since this was allocated in this thread, we save that flag
@@ -518,8 +541,10 @@ extern will_os_thread_id_t will_os_add_thread(will_os_thread_func_t thread, void
       // Updating current state to the old state
       current_state = old_state; 
       thread_count++; 
+
+      // If the previous state was a start up operating system or if it was the first run
       if(old_state == WILL_OS_STARTED || old_state == WILL_OS_FIRST_RUN)
-        will_os_system_start(old_state);
+        will_os_system_start();
       // Returning the thread id
       return i; 
     }
@@ -528,7 +553,7 @@ extern will_os_thread_id_t will_os_add_thread(will_os_thread_func_t thread, void
   // Restarting the OS kernel, if we couldn't find any space then we weren't able to return
   // A working thread handler since the thread wasn't initialized 
   if(old_state == WILL_OS_STARTED)
-    will_os_system_start(old_state);
+    will_os_system_start();
   return -1; 
 }
 
@@ -538,13 +563,13 @@ extern will_os_thread_id_t will_os_add_thread(will_os_thread_func_t thread, void
 *   @params  none
 *   @returns none
 */
-extern void will_os_load_next_thread(void){
+void will_os_load_next_thread(void){
   current_thread->sp = current_stack_pointer;
   
   // Stack overflow ISR is triggered if we overflow any thread except thread 0(main thread)
   // Allows for an extra 8 bytes for a call to ISR and one call/variables
   if(current_thread_id && (uint8_t*)current_thread->sp - current_thread->stack <= 8){
-    stack_overflow_isr();
+    will_os_stack_overflow_isr();
   }
 
   // Search for next running thread
@@ -570,4 +595,107 @@ extern void will_os_load_next_thread(void){
   // Current Stack Pointer
   current_stack_pointer = system_threads[current_thread_id]->sp; 
 }
+
+/*
+* @brief Gets the state of a thread. 
+* @brief If thread doesn't exist, then 
+* @params Which thread are we trying to get our state for
+* @returns will_thread_state_t
+*/
+will_thread_state_t will_os_get_thread_state(will_os_thread_id_t thread_id){
+  if(thread_id < thread_count)
+    return system_threads[thread_id]->flags;
+  return WILL_THREAD_STATE_DNE; 
+}
+
+/*
+* @brief Sets the state of a thread. 
+* @brief If thread doesn't exist, then 
+* @params Which thread are we trying to get our state for
+* @returns will_thread_state_t
+*/
+extern will_thread_state_t will_os_set_thread_state(will_os_thread_id_t thread_id, will_thread_state_t thread_state){
+  if(thread_id < thread_count){
+    system_threads[thread_id]->flags = thread_state;
+    return thread_state; 
+  }
+  return WILL_THREAD_STATE_DNE;
+}
+
+/*
+* @brief Sets the state of a thread to dead 
+* @brief If thread doesn't exist, then 
+* @params Which thread are we trying to get our state for
+* @returns will_thread_state_t
+*/
+extern will_os_thread_id_t will_os_kill_thread(will_os_thread_id_t thread_id){
+  if(thread_id < thread_count){
+    system_threads[thread_id]->flags = WILL_THREAD_STATE_ENDED;
+    return thread_id; 
+  }
+  return -1;
+}
+
+/*
+* @brief Sets the state of a thread to suspended. 
+* @brief If thread doesn't exist, then 
+* @params Which thread are we trying to get our state for
+* @returns will_thread_state_t
+*/
+extern will_os_thread_id_t will_os_suspend_thread(will_os_thread_id_t thread_id){
+  if(thread_id < thread_count){
+    system_threads[thread_id]->flags = WILL_THREAD_STATE_SUSPENDED;
+    return thread_id; 
+  }
+  return -1; 
+}
+
+/*
+* @brief Sets the state of a thread to running 
+* @brief If thread doesn't exist, then 
+* @params Which thread are we trying to get our state for
+* @returns will_thread_state_t
+*/
+extern will_os_thread_id_t will_os_restart_thread(will_os_thread_id_t thread_id){
+  if(thread_id < thread_count){
+    system_threads[thread_id]->flags = WILL_THREAD_STATE_RUNNING;
+    return thread_id; 
+  }
+  return -1;
+}
+
+/*
+* @brief Set's default thread creation stack size to inputed value
+* @params unsigned int stack_size(that we want to change to our default)
+* @returns none
+*/
+extern void will_os_set_default_stack_size(unsigned int stack_size){
+  WILL_OS_DEFAULT_STACK_SIZE = stack_size; 
+} 
+
+/*
+* @brief Sets the tick count of a thread
+* @brief If thread doesn't exist, then 
+* @params Which thread are we trying to change our tick count, the tickount
+* @returns bool(success of function call)
+*/
+extern bool will_os_set_time_slice(will_os_thread_id_t thread_id, unsigned int ticks){
+  if(thread_id < thread_count){
+    system_threads[thread_id]->ticks = ticks-1; 
+    return true; 
+  }
+
+  return false; 
+}
+
+/*
+* @brief Sets the default tick count of a thread upon creation. 
+* @brief If thread doesn't exist, then 
+* @params unsigned int ticks(default tick count)
+* @returns none
+*/
+extern void will_os_set_time_slice(unsigned int ticks){
+  WILL_OS_DEFAULT_TICKS = ticks - 1; 
+}
+
 #endif 

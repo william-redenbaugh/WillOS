@@ -1,45 +1,25 @@
 #include <Arduino.h>
-#include "will_os.h"
-
-void setup(){
-
-}
-
-void loop(){
-
-}
-
-// TeensyThreads Testing
-/*
 #include "TeensyThreads.h"
 
 const int LED = 13;
-
 volatile int blinkcode = 0;
 
-void blinkthread() {
+void blinkthread(void *parameters) {
   while(1) {    
       digitalWrite(LED, HIGH);
-      threads.delay(1000);
-      digitalWrite(LED, LOW);
-      threads.delay(1000);
+      os_thread_delay_ms(2000);
   }
 }
 
 void setup() {
-  delay(1000);
+  delay(4000);
+  threads_init();
   pinMode(LED, OUTPUT);
-  threads.addThread(blinkthread);
-}
-
-int count = 0;
-
-void loop() {
-  //digitalWrite(LED, HIGH);
-  //threads.delay(150);
-  //digitalWrite(LED, LOW);
-  //threads.delay(150);
+  os_add_thread((thread_func_t)blinkthread, 0, -1, 0);
   threads.delay(1000);
 }
 
-*/
+void loop() {
+  os_thread_delay_ms(2000);
+  digitalWrite(LED, LOW);
+}

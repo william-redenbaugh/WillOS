@@ -1,6 +1,17 @@
 #ifndef _WILL_OS_H
 #define _WILL_OS_H
 #include <Arduino.h>
+#include <stdint.h> 
+
+extern "C" {
+  void will_os_context_switch(void);
+  void will_os_context_switch_direct(void);
+  void will_os_context_switch_pit_isr(void);
+  void load_next_thread_asm_call(void);
+  void stack_overflow_isr(void);
+  void will_os_threads_svcall_isr(void);
+  void will_os_threads_systick_isr(void);
+}
 
 /*
 *   @brief Maximum amount of threads the Will-OS supports
@@ -99,7 +110,8 @@ enum will_thread_state_t{
     WILL_THREAD_STATE_RUNNING =     2, 
     WILL_THREAD_STATE_ENDING =      3, 
     WILL_THREAD_STATE_ENDED =       4, 
-    WILL_THREAD_STATE_SUSPENDED =   5
+    WILL_THREAD_STATE_SUSPENDED =   5,
+    WILL_THREAD_STATE_DNE =         -1
 };
 
 /*
@@ -122,13 +134,11 @@ typedef struct{
     // Where we save all our registers for context switching .
     context_switch_stack_t register_contexts; 
     // Flags for dealing with thread 
-    volatile will_thread_state_t flags = WILL_THREAD_STATE_UNITIALIZED; 
+    volatile int flags = WILL_THREAD_STATE_UNITIALIZED; 
     // Where are we in the program so far
     void *sp; 
     // Thread ticks 
-    int ticks;
-    // Uninitialized thread ID.
-    will_os_thread_id_t thread_id = -1;  
+    int ticks; 
 }thread_t; 
 
 /*
@@ -194,7 +204,7 @@ extern int will_os_system_stop();
 *   @params none
 *   @returns int original state of machine
 */
-extern int will_os_system_start(int previous_state);
+extern int will_os_system_start(int previous_state = -1);
 
 /*
 *   @brief  deletes a thread from the system. 
@@ -242,4 +252,58 @@ extern will_os_thread_id_t will_os_add_thread(will_os_thread_func_t thread, void
 */
 extern void will_os_load_next_thread(void);
 
+/*
+* @brief Gets the state of a thread. 
+* @brief If thread doesn't exist, then 
+* @params Which thread are we trying to get our state for
+* @returns will_thread_state_to
+*/
+will_thread_state_t will_os_get_thread_state(will_os_thread_id_t thread_id);
+
+/*
+* @brief Sets the state of a thread to dead 
+* @brief If thread doesn't exist, then 
+* @params Which thread are we trying to get our state for
+* @returns will_thread_state_t
+*/
+extern will_os_thread_id_t will_os_kill_thread(will_os_thread_id_t thread_id);
+
+/*
+* @brief Sets the state of a thread to suspended. 
+* @brief If thread doesn't exist, then 
+* @params Which thread are we trying to get our state for
+* @returns will_thread_state_t
+*/
+extern will_os_thread_id_t will_os_suspend_thread(will_os_thread_id_t thread_id);
+
+/*
+* @brief Sets the state of a thread to running 
+* @brief If thread doesn't exist, then 
+* @params Which thread are we trying to get our state for
+* @returns will_thread_state_t
+*/
+extern will_os_thread_id_t will_os_restart_thread(will_os_thread_id_t thread_id);
+
+/*
+* @brief Set's default thread creation stack size to inputed value
+* @params unsigned int stack_size(that we want to change to our default)
+* @returns none
+*/
+extern void will_os_set_default_stack_size(unsigned int stack_size);
+
+/*
+* @brief Sets the tick count of a thread
+* @brief If thread doesn't exist, then 
+* @params Which thread are we trying to change our tick count, the tickount
+* @returns bool(success of function call)
+*/
+extern bool will_os_set_time_slice(will_os_thread_id_t thread_id, unsigned int ticks);
+
+/*
+* @brief Sets the default tick count of a thread upon creation. 
+* @brief If thread doesn't exist, then 
+* @params unsigned int ticks(default tick count)
+* @returns none
+*/
+extern void will_os_set_time_slice(unsigned int ticks);
 #endif 
