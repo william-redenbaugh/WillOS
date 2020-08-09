@@ -1,5 +1,6 @@
 #include "lp_work_thread.h"
 #include <vector>
+
 /*
 Author: William Redenbaugh
 Last Edit Date: 8/9/2020
