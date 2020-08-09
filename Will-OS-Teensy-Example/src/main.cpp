@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include "OSThreadKernel.h"
 #include "OSMutexKernel.h"
+#include "lp_work_thread.h"
 
 const int LED = 13;
 volatile int blinkcode = 0;
@@ -19,11 +20,18 @@ void blinkthread(void *parameters) {
   }
 }
 
+void printhello(void){
+  Serial.println("Hello");
+}
+
 void setup() {
   delay(4000);
-
+  Serial.begin(115200);
   // Macro that initializes the primary thread. 
   os_init();
+  // Startup our low priority work thread
+  setup_lwip_thread();
+  add_lwip_task(printhello, NULL, 1000);
   pinMode(LED, OUTPUT);
   target_thread = os_add_thread((thread_func_t)blinkthread, 0, -1, 0);
 }
