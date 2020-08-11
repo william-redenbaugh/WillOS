@@ -87,6 +87,13 @@ void lp_thread_func(void){
         if(num_lwip_threads >= 1)
             run_tasks();
 
+        // If there are no threads, then we just chill. 
+        else
+            os_thread_delay_s(1);
+    }
+}
+
+/**************************************************************************/
 /*!
     @brief Starts up our low priority work thread. 
 */
