@@ -36,11 +36,20 @@ extern LPThreadInitReturn add_lwip_task(void (*func)(void *ptr),  void *args, ui
 
 extern void setup_lwip_thread(void);
 
+/*
+*   @brief checks to see if a task is ready and should be triggered
+*   @params Which task we are specifying
+*/
 static inline bool check_task_trigger(uint16_t num){
     return (thread_list[num].next_exec_time <= millis()) && (thread_list[num].thread_en); 
 }
 
+/*
+*   @brief Periodic task that runs through, executes the tasks we want it to, then sleeps until next required task
+*   @notes Should be run in another loop.
+*/
 static inline void run_tasks(void){
+    // Wait until we have the lpwork mutex
     lpwork_mutex.lockWaitIndefinite();
     
     // Minimum ticks until we need to circle back around and get to all the lwip threads
@@ -70,19 +79,14 @@ static inline void run_tasks(void){
         os_thread_delay_ms(min_tick - millis());
 }
 
+/*
+*   @brief Actual thread function that holds everything
+*/
 void lp_thread_func(void){
     for(;;){
         if(num_lwip_threads >= 1)
             run_tasks();
 
-        // If there are no threads, then we just chill. 
-        else{
-            os_thread_delay_s(1);
-        }
-    }
-}
-
-/**************************************************************************/
 /*!
     @brief Starts up our low priority work thread. 
 */
