@@ -36,41 +36,45 @@ extern LPThreadInitReturn add_lwip_task(void (*func)(void *ptr),  void *args, ui
 
 extern void setup_lwip_thread(void);
 
+static inline bool check_task_trigger(uint16_t num){
+    return (thread_list[num].next_exec_time <= millis()) && (thread_list[num].thread_en); 
+}
+
+static inline void run_tasks(void){
+    lpwork_mutex.lockWaitIndefinite();
+    
+    // Minimum ticks until we need to circle back around and get to all the lwip threads
+    uint32_t min_tick = thread_list[0].next_exec_time; 
+    // run through entire list of functions and execute
+    for(uint16_t num = 0; num < num_lwip_threads; num++){
+        // If it's about time to run the function. 
+        if(check_task_trigger(num)){
+            // We run the function
+            thread_list[num].func(thread_list[num].ptr);
+
+            // Set the next time we want the function to run
+            thread_list[num].next_exec_time = thread_list[num].interval_time + millis();
+            // If there is a thread that must run in less time than currently specified for low
+        }
+        // priority thread to work in, decreate time for next thread sleep. 
+        if(min_tick > thread_list[num].next_exec_time)
+            min_tick = thread_list[num].next_exec_time; 
+        
+    }
+    lpwork_mutex.unlock();
+    
+    // Just in case timer restarted or other issue that hangs a lwip thread, then we don't wait for a sleep command just in case things take longer than we want them to. 
+    // We opt out of sleeping. 
+    if(min_tick > millis())
+        // Sleep for shortest remaining tick cycle until the next command 
+        os_thread_delay_ms(min_tick - millis());
+}
+
 void lp_thread_func(void){
     for(;;){
-        if(num_lwip_threads >= 1){
-            // Minimum ticks until we need to circle back around and get to all the lwip threads
-            uint32_t min_tick = thread_list[0].next_exec_time; 
+        if(num_lwip_threads >= 1)
+            run_tasks();
 
-            lpwork_mutex.lockWaitIndefinite();
-            // run through entire list of functions and execute
-            for(uint16_t num = 0; num < num_lwip_threads; num++){
-                // If it's about time to run the function. 
-                if(thread_list[num].next_exec_time <= millis()){
-                    // If the function is enabled. 
-                    if(thread_list[num].thread_en){
-                        // We run the function
-                        thread_list[num].func(thread_list[num].ptr);
-
-                        // Set the next time we want the function to run
-                        thread_list[num].next_exec_time = thread_list[num].interval_time + millis();
-                        // If there is a thread that must run in less time than currently specified for low
-                }
-                
-                }
-                // priority thread to work in, decreate time for next thread sleep. 
-                if(min_tick > thread_list[num].next_exec_time)
-                    min_tick = thread_list[num].next_exec_time; 
-                
-            }
-            lpwork_mutex.unlock();
-            
-            // Just in case timer restarted or other issue that hangs a lwip thread, then we don't wait for a sleep command just in case things take longer than we want them to. 
-            // We opt out of sleeping. 
-            if(min_tick > millis())
-                // Sleep for shortest remaining tick cycle until the next command 
-                os_thread_delay_ms(min_tick - millis());
-        }
         // If there are no threads, then we just chill. 
         else{
             os_thread_delay_s(1);
