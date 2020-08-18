@@ -2,8 +2,8 @@
 #define _LP_WORK_THREAD_H
 
 #include <Arduino.h> 
-#include "OSThreadKernel.h"
-#include "OSMutexKernel.h"
+#include "OS/OSThreadKernel.h"
+#include "OS/OSMutexKernel.h"
 
 // Maximum number of low priority work threads available
 #define NUM_MAX_LPWTHREADS 256

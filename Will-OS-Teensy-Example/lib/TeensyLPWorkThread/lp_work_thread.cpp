@@ -89,7 +89,7 @@ void lp_thread_func(void){
 
         // If there are no threads, then we just chill. 
         else
-            os_thread_delay_s(1);
+            os_thread_delay_ms(100);
     }
 }
 
