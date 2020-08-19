@@ -14,23 +14,34 @@
 #include "teensy_coms.h"
 
 const int LED = 13;
-volatile int blinkcode = 0;
-MutexLock lock_test; 
-os_thread_id_t target_thread; 
+bool en = true; 
+
+void msg_callback(MessageReq *msg){
+  if(en){
+    en = false; 
+    digitalWrite(LED_BUILTIN, HIGH);
+  }
+  else{
+    en = true; 
+    digitalWrite(LED_BUILTIN, LOW);
+  }
+}
 
 void setup() {
-  Serial.read();
   // Macro that initializes the primary thread. 
   os_init();
   // Setup low priority thread. 
   setup_lwip_thread();
   // Starts up the OS managed serial interface. 
   os_usb_serial_begin();
+  
+  pinMode(LED_BUILTIN, OUTPUT);
+  //digitalWrite(LED_BUILTIN, HIGH);
 
   message_management_begin();  
+  add_message_callback(MessageData_MessageType_STATUS_DATA, msg_callback);
 }
 
-
 void loop() {
-    
+  os_thread_delay_s(1);   
 }

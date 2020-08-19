@@ -1,7 +1,7 @@
 #include "teensy_coms.h"
 
 // Defining the stack space that we are putting all of our message management stuff into 
-#define MESSAGE_MANAGEMENT_STACK_SIZE 3084
+#define MESSAGE_MANAGEMENT_STACK_SIZE 128
 static uint32_t message_management_stack[MESSAGE_MANAGEMENT_STACK_SIZE]; 
 
 /*
@@ -19,36 +19,107 @@ struct MessageSubroutine{
     // Stuff, we just say whether or not the message subroute is used or not. 
     bool used = false; 
 };
+// No message subroutines 
 #define MAX_MESSAGE_SUBROUTINE_NUM 64
-static MessageSubroutine message_subroutine_list[MAX_MESSAGE_SUBROUTINE_NUM]; 
-static uint32_t callback_num = 0;
-static MutexLock message_callback_mutex; 
 
+// List of callback pointers's information to execute 
+static MessageSubroutine message_subroutine_list[MAX_MESSAGE_SUBROUTINE_NUM]; 
+
+// Currently Active callbacks
+static uint32_t callback_num = 0;
+
+// Lock surrounding the messagings. 
+static MutexLock MessageMutex;  
+
+// Function that let's us deal with our running threads. 
 static void run_threads(void);
+
+// The input buffer that we read our latest data into. 
+static uint8_t in_arr_buffer[4096];
+
+// Thread ID for the message management thread. 
+static os_thread_id_t message_management_thread_id; 
 
 /*
 *   @brief The thread function that we will do all of our message management stuff in
 */
 void message_management_thread(void *parameters){
-    uint32_t last_millis; 
     for(;;){
-        last_millis = millis(); 
-        
-        run_threads();
-
-        // Ensures that we sleep for 14 milliseconds every time 
-        uint32_t latest_millis = millis() - last_millis; 
-        // If it took longer than 14 milliseconds to complete last loop
-        // Then we don't delay at all
-        if(latest_millis < 14)
-            // Otherwise delay for the remainder of the 14ms period so that we delay as close to 
-            // 14 ms as we can get. 
-            os_thread_delay_ms(14 - latest_millis);
+        run_threads(); 
+        os_thread_delay_ms(10);
     }
 }
 
-__attribute__((always_inline)) static void run_threads(void){
+/*
+*   @brief Once we have gotten a message header, then we read the remainder of the message. 
+*/
+static void get_rest_of_message(uint32_t msg_size){
+    // No point in reading if there isn't anything. 
+    if(msg_size){
+        // While we are waiting for message data to come in
+        while(os_usb_serial_bytes_available() < msg_size)
+            os_thread_delay_ms(1);
+   
+        // Read in the serial buffer. 
+        os_usb_serial_read(in_arr_buffer,(size_t)msg_size); 
+    }
+}
 
+/* 
+* @brief Checks which of our request->response systems need to be interrupted 
+* @notes Should only be called from within the udp_message_management file
+* params MessageData message_data
+* returns none
+*/
+static void check_req_res(MessageData message_data){
+    uint32_t n = 0;  
+    uint32_t x = 0; 
+    while(1){
+        // Once we have exited out of 
+        // The total number of active callbacks 
+        // In our array, we exit out of the loop
+        if(x >= callback_num)
+            break; 
+
+        // If the message type matches, we call the function
+        if(message_subroutine_list[n].msg_type == message_data.message_type && message_subroutine_list[n].en == true && message_subroutine_list[n].used == true){
+            MessageReq msg_req = {in_arr_buffer,(int)message_data.message_size};
+            // Call callback function
+            message_subroutine_list[n].func(&msg_req); 
+        }
+
+        // If that thread is being used, then we increment 
+        // The amount of callbacks we have checked. 
+        if(message_subroutine_list[n].used)
+            x++; 
+        
+        n++; 
+    }
+}
+
+/*
+*   @brief Function that get's called roughly every 14ms to check thread stuff. 
+*/
+static void run_threads(void){
+    // Making things "threadsafe"
+    MessageMutex.lockWaitIndefinite(); 
+    
+    // If more than 16 bytes are available, then it's likely the serial buffer has been filled. 
+    if(os_usb_serial_bytes_available() >= 16){ 
+        // Transfer the data from the serial buffer 
+        // Our local buffer. 
+        uint8_t arr[16]; 
+        os_usb_serial_read(arr, 16);
+        
+        // Unpack the information
+        MessageData message_data = unpack_message_data(arr, 16);
+        
+        // How big is the remainder of the message. 
+        get_rest_of_message(message_data.message_size); 
+        check_req_res(message_data);
+    }
+    // Relinquise the resource lock 
+    MessageMutex.unlock(); 
 }
 
 /* 
@@ -62,9 +133,10 @@ __attribute__((always_inline)) static void run_threads(void){
 extern MessageSubroutineSetupReturn add_message_callback(MessageData_MessageType msg_type, void(*func)(MessageReq *ptr)){
     MessageSubroutineSetupReturn setup_return; 
 
-    uint8_t msg_id;  
-    // Running through and looking for the first spot in the array
-    // That doesn't has a thread used spot. 
+    MessageMutex.lockWaitIndefinite();
+
+    uint8_t msg_id = 0;  
+    
     for(msg_id = 0; msg_id < MAX_MESSAGE_SUBROUTINE_NUM; msg_id++){
         if(message_subroutine_list[msg_id].used == false)
             break;     
@@ -89,6 +161,9 @@ extern MessageSubroutineSetupReturn add_message_callback(MessageData_MessageType
     setup_return.callback_handler_id = msg_id; 
     setup_return.setup_status = SUBROUTINE_ADD_SUCCESS; 
     callback_num++; 
+    
+    MessageMutex.unlock();
+
     return setup_return; 
 }
 
@@ -115,6 +190,14 @@ extern MessageSubroutineSetupStatus remove_message_callback(uint32_t callback_ha
 void message_management_begin(void){
     // Starts up the serial interface.
     os_usb_serial_begin(); 
+    
     // We have our own thread that deals with the message management stuff. 
-    os_add_thread(&message_management_thread, NULL, MESSAGE_MANAGEMENT_STACK_SIZE, &message_management_stack);
+    message_management_thread_id = os_add_thread(&message_management_thread, NULL, MESSAGE_MANAGEMENT_STACK_SIZE, &message_management_stack);
+}
+
+/*
+*   @brief Kills the message management thread. 
+*/
+void message_management_end(void){
+    os_kill_thread(message_management_thread_id); 
 }
