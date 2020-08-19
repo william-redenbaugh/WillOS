@@ -38,7 +38,7 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   //digitalWrite(LED_BUILTIN, HIGH);
 
-  message_management_begin();  
+  message_callbacks_begin();  
   add_message_callback(MessageData_MessageType_STATUS_DATA, msg_callback);
 }
 

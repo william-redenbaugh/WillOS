@@ -20,10 +20,10 @@ struct MessageSubroutine{
     bool used = false; 
 };
 // No message subroutines 
-#define MAX_MESSAGE_SUBROUTINE_NUM 64
+#define MAX_MESSAGE_CALLBACK_NUM 64
 
 // List of callback pointers's information to execute 
-static MessageSubroutine message_subroutine_list[MAX_MESSAGE_SUBROUTINE_NUM]; 
+static MessageSubroutine message_subroutine_list[MAX_MESSAGE_CALLBACK_NUM]; 
 
 // Currently Active callbacks
 static uint32_t callback_num = 0;
@@ -32,7 +32,7 @@ static uint32_t callback_num = 0;
 static MutexLock MessageMutex;  
 
 // Function that let's us deal with our running threads. 
-static void run_threads(void);
+static void run_messaging_once(void);
 
 // The input buffer that we read our latest data into. 
 static uint8_t in_arr_buffer[4096];
@@ -44,9 +44,19 @@ static os_thread_id_t message_management_thread_id;
 *   @brief The thread function that we will do all of our message management stuff in
 */
 void message_management_thread(void *parameters){
+    uint32_t last_millis; 
     for(;;){
-        run_threads(); 
-        os_thread_delay_ms(10);
+        last_millis = millis(); 
+
+        // We run the required stuff for our program. 
+        run_messaging_once(); 
+
+        // How long did our program take to run
+        uint32_t time_offset = millis() - last_millis;
+        // If we are not running overtime(aka subroutine took longer than 14 milliseconds) 
+        if((int)(time_offset - 14) > 0)
+            // Then we delay for the remainder. 
+            os_thread_delay_ms(14 - time_offset);
     }
 }
 
@@ -100,7 +110,7 @@ static void check_req_res(MessageData message_data){
 /*
 *   @brief Function that get's called roughly every 14ms to check thread stuff. 
 */
-static void run_threads(void){
+static void run_messaging_once(void){
     // Making things "threadsafe"
     MessageMutex.lockWaitIndefinite(); 
     
@@ -128,42 +138,53 @@ static void run_threads(void){
 * And unpacking yourself. 
 * params MessageData_MessageType which type of message data are we sending?
 * params void(*func)(MessageReq *ptr) callback for dealing with subroutines. 
-* returns MessageSubroutineSetupStatus whether or not we actually go the information we needed and the handler ID
+* returns Callbackor not we actually go the information we needed and the handler ID
 */
-extern MessageSubroutineSetupReturn add_message_callback(MessageData_MessageType msg_type, void(*func)(MessageReq *ptr)){
-    MessageSubroutineSetupReturn setup_return; 
+extern MessageCallbackSetupReturn add_message_callback(MessageData_MessageType msg_type, void(*func)(MessageReq *ptr)){
+    // Message we are going to return to the ownership function
+    MessageCallbackSetupReturn setup_return; 
 
+    // Lock the resource mutex
     MessageMutex.lockWaitIndefinite();
 
-    uint8_t msg_id = 0;  
+    // Which spot in our array are we writing our code into 
+    uint16_t msg_id = 0;  
     
-    for(msg_id = 0; msg_id < MAX_MESSAGE_SUBROUTINE_NUM; msg_id++){
+    // We are running through our array, and the first spot we find that is 
+    // False, we choose that as the spot for our callback spot/ID
+    for(msg_id = 0; msg_id < MAX_MESSAGE_CALLBACK_NUM; msg_id++){
         if(message_subroutine_list[msg_id].used == false)
             break;     
     }
     
     // If we ran out of spots to put our message subroutine stuff
-    if((msg_id+1) == MAX_MESSAGE_SUBROUTINE_NUM){
-        setup_return.setup_status = SUBROUTINE_ADD_FAIL_MAX_NUM_REACHED;
+    if((msg_id+1) == MAX_MESSAGE_CALLBACK_NUM){
+        setup_return.setup_status = CALLBACK_ADD_FAIL_MAX_NUM_REACHED;
         return setup_return; 
     }
 
     // Flags that tell machine that we are using this spot, and that 
     // This callback is enabled 
     message_subroutine_list[msg_id].en = true; 
+    // Lets program know that this callback space is being used
     message_subroutine_list[msg_id].used = true; 
     
-    message_subroutine_list[msg_id].msg_type = msg_type; 
+    // The type of message that we are using
+    message_subroutine_list[msg_id].msg_type = msg_type;
+    // Pointer call to the function of the program.  
     message_subroutine_list[msg_id].func = func; 
 
     // Let's owner function know that we were able to setup the subroutine
     // And the id of our message handler. 
     setup_return.callback_handler_id = msg_id; 
-    setup_return.setup_status = SUBROUTINE_ADD_SUCCESS; 
+    // Let's controller function know that the subroutine was added successfullly. 
+    setup_return.setup_status = CALLBACK_ADD_SUCCESS; 
+
+    // Since we have another callback in our program 
     callback_num++; 
     
+    // Relinquish the mutex. 
     MessageMutex.unlock();
-
     return setup_return; 
 }
 
@@ -172,22 +193,22 @@ extern MessageSubroutineSetupReturn add_message_callback(MessageData_MessageType
 *   @params uint32_t callback_handler_id(which thread are we trying to remove)
 *   @returns Whether or not we were able to remove the callback and why. 
 */
-extern MessageSubroutineSetupStatus remove_message_callback(uint32_t callback_handler_id){
-    if(callback_handler_id >= MAX_MESSAGE_SUBROUTINE_NUM)
-        return SUBROUTINE_REMOVE_OUT_OF_BOUMDS; 
+extern MessageCallbackSetupStatus remove_message_callback(uint32_t callback_handler_id){
+    if(callback_handler_id >= MAX_MESSAGE_CALLBACK_NUM)
+        return CALLBACK_REMOVE_OUT_OF_BOUMDS; 
 
     // Since we are no longer using this space
     // It will be there to use for the next person to ask for a callback!
     message_subroutine_list[callback_handler_id].used = false; 
     callback_num--; 
-    return SUBROUTINE_REMOVE_SUCCESS; 
+    return CALLBACK_REMOVE_SUCCESS; 
 }
 
 /*
 *   @brief  Starts up all of the message management stuff so we can get messages!
 *   @notes  Just call this, and then attach whatever event driven messaging stuff you feel you need to do 
 */
-void message_management_begin(void){
+void message_callbacks_begin(void){
     // Starts up the serial interface.
     os_usb_serial_begin(); 
     
@@ -198,6 +219,7 @@ void message_management_begin(void){
 /*
 *   @brief Kills the message management thread. 
 */
-void message_management_end(void){
+void message_callbacks_end(void){
+    // We kill our thread if prompted to end our message management callbacks
     os_kill_thread(message_management_thread_id); 
 }
