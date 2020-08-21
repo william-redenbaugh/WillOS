@@ -1,7 +1,16 @@
 #include "teensy_coms.h"
 
+/*
+*   @brief Maximum amount of callbacks handlers defined here,
+*   @notes Currently we limit it to 64 since the entire arrays are statically
+*   defined. In the future we may use an array of pointers pointing to heap allocated objects. 
+*   That way if we aren't using that many we can save memory, and if we are using more then we can
+*   have the capacity to do that easily. 
+*/
+#define MAX_MESSAGE_CALLBACK_NUM 64
+
 // Defining the stack space that we are putting all of our message management stuff into 
-#define MESSAGE_MANAGEMENT_STACK_SIZE 128
+#define MESSAGE_MANAGEMENT_STACK_SIZE 1024
 static uint32_t message_management_stack[MESSAGE_MANAGEMENT_STACK_SIZE]; 
 
 /*
@@ -18,9 +27,7 @@ struct MessageSubroutine{
     // If we "delete" a callback, since we statically allocated all this 
     // Stuff, we just say whether or not the message subroute is used or not. 
     bool used = false; 
-};
-// No message subroutines 
-#define MAX_MESSAGE_CALLBACK_NUM 64
+}; 
 
 // List of callback pointers's information to execute 
 static MessageSubroutine message_subroutine_list[MAX_MESSAGE_CALLBACK_NUM]; 
@@ -31,14 +38,17 @@ static uint32_t callback_num = 0;
 // Lock surrounding the messagings. 
 static MutexLock MessageMutex;  
 
-// Function that let's us deal with our running threads. 
-static void run_messaging_once(void);
-
-// The input buffer that we read our latest data into. 
+/*
+*   @brief The buffer that we have set asside for when larger objects come in. 
+*/
 static uint8_t in_arr_buffer[4096];
 
-// Thread ID for the message management thread. 
+/*
+*   @brief Thread ID handler for our message management hread. 
+*/
 static os_thread_id_t message_management_thread_id; 
+
+static void run_messaging_once(void);
 
 /*
 *   @brief The thread function that we will do all of our message management stuff in

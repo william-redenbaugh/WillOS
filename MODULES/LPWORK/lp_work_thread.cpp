@@ -22,8 +22,14 @@ struct LwipThread{
     uint32_t handle = 0; 
 };
 
-// Number of low priority threads available
+/*
+*   @brief Number of currently active low priority work threads. 
+*/
 volatile uint16_t num_lwip_threads = 0;
+
+/*
+*   @brief 
+*/
 volatile uint32_t handle_increment = 0;  
 volatile uint32_t lowest_interval = 0; 
 

@@ -1,5 +1,8 @@
 #include "OSSerial.h"
 
+/*
+*   @brief Mutex that we use to ensure that the USB resource is only being used by one device at a time 
+*/
 static MutexLock usbSerialMutex; 
 
 /*
