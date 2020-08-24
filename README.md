@@ -134,6 +134,7 @@ void loop(){
 
 
 ## Setting up low priority work thread example: 
+Sometimes rather than using separate threads to complete tasks, we can complete a group of functions in a single thread at scheduled intervals. This is how you can do that. 
 
 ```
 // RTOS module
@@ -169,6 +170,7 @@ void loop() {
 
 
 ## Writing the the USB Serial in a threadsafe way
+Prefered whenever you are using serial device across a few threads. 
 ```
 
 #include "OS/OSThreadKernel.h"
