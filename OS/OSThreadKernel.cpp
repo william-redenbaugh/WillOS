@@ -360,7 +360,7 @@ inline void __attribute__((always_inline))os_setup_t4_isr_timers(void){
   _VectorsRam[11] = threads_svcall_isr;
 
   current_use_systick = 0; // disable Systick calls
-  t4_gpt_init(1000);       // tick every millisecond
+  t4_gpt_init(200);       // tick every millisecond
 }
 
 /*

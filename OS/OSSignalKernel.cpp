@@ -21,10 +21,10 @@ void OSSignal::clear(thread_signal_t thread_signal){
 *   @params thread_signal_t which bit we want to check
 *   @returns The status of the signal we are checking 
 */
-thread_signal_status_t OSSignal::check(thread_signal_t thread_signal){
+bool OSSignal::check(thread_signal_t thread_signal){
     if(OS_CHECK_BIT(this->bits, (uint32_t)thread_signal))
-        return THREAD_SIGNAL_SET; 
-    return THREAD_SIGNAL_CLEAR;    
+        return true; 
+    return false;    
 }
 
 /*
@@ -33,21 +33,21 @@ thread_signal_status_t OSSignal::check(thread_signal_t thread_signal){
 *   @params uint32_t timeout_ms timeout or max time we are willing to wait for bits to clear
 *   @returns whether or or not we we able to get set bits or not
 */
-thread_signal_status_t OSSignal::wait(thread_signal_t thread_signal, uint32_t timeout_ms){
+bool OSSignal::wait(thread_signal_t thread_signal, uint32_t timeout_ms){
     // Checking case immediatly. 
     if(OS_CHECK_BIT(this->bits, (uint32_t)thread_signal))
-        return THREAD_SIGNAL_SET; 
+        return true; 
 
     // Starting system tick
     uint32_t start = millis();
 
     while(1){
         if(OS_CHECK_BIT(this->bits, (uint32_t)thread_signal))
-            return THREAD_SIGNAL_SET; 
+            return true; 
 
         if(timeout_ms && (millis() - start > timeout_ms))
-            return THREAD_SIGNAL_TIMEOUT;
-  
+            return false;
+
         _os_yield();   
     }
 }

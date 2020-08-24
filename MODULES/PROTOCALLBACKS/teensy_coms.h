@@ -14,9 +14,7 @@
 
 // Include our protobuffer messages
 #include "messagedata.pb.h"
-#include "relay_msg.pb.h"
-#include "temp_hum.pb.h"
-#include "clock_program.pb.h"
+
 // Helper library that speeds up development
 // Involving deserialization
 #include "proto_msg_unpack.h"

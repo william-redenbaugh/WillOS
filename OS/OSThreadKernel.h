@@ -429,10 +429,10 @@ typedef enum{
 * @brief The staus of a thread whose bits we wanna check
 */
 typedef enum{
-  THREAD_SIGNAL_SET, 
-  THREAD_SIGNAL_CLEAR, 
-  THREAD_SIGNAL_DNE, 
-  THREAD_SIGNAL_TIMEOUT
+  THREAD_SIGNAL_CLEAR = 0, 
+  THREAD_SIGNAL_SET = 1, 
+  THREAD_SIGNAL_DNE = 2, 
+  THREAD_SIGNAL_TIMEOUT = 3
 }thread_signal_status_t;
 
 /*

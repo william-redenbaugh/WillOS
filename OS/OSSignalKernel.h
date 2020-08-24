@@ -24,7 +24,7 @@ class OSSignal{
     *   @params thread_signal_t which bit we want to check
     *   @returns The status of the signal we are checking 
     */
-    thread_signal_status_t check(thread_signal_t thread_signal);
+    bool check(thread_signal_t thread_signal);
     
     /*
     *   @brief Checks to see if a bit is cleared or set
@@ -32,7 +32,7 @@ class OSSignal{
     *   @params uint32_t timeout_ms timeout or max time we are willing to wait for bits to clear
     *   @returns whether or or not we we able to get set bits or not
     */
-    thread_signal_status_t wait(thread_signal_t thread_signal, uint32_t timeout_ms);
+    bool wait(thread_signal_t thread_signal, uint32_t timeout_ms);
     
     /*
     *   @brief Waits for bits to be set indefinitly
@@ -47,7 +47,7 @@ class OSSignal{
 
     private: 
     // Bits data that we are using to wait with 
-    volatile uint32_t bits; 
+    volatile uint32_t bits = 0; 
 };
 
 #endif 
