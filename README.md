@@ -10,7 +10,7 @@ Even though this is a fork from the TeensyThreads library, in reality it's a com
 Here is an example where we create a thread, and sleep it every 1/10th of a second. 
 
 ```
-#include "OSThreadKernel.h"
+#include "OS/OSThreadKernel.h"
 
 // Thread handler ID that we can use to manipulate a thread. 
 os_thread_t target_thread; 
@@ -39,8 +39,8 @@ void loop(){
 Here is an example where we create a thread, and put a mutex over a resource. For sake of simplicity we will put a resource over the serial terminal. 
 
 ```
-#include "OSThreadKernel.h"
-#include "OSMutexKernel.h"
+#include "OS/OSThreadKernel.h"
+#include "OS/OSMutexKernel.h"
 
 // Thread handler ID that we can use to manipulate a thread. 
 os_thread_t target_thread; 
@@ -88,8 +88,8 @@ void loop(){
 There are control bits that we can use to signal a thread. 32 per thread in fact. Here is an example where we use those bits: 
 ```
 
-#include "OSThreadKernel.h"
-#include "OSMutexKernel.h"
+#include "OS/OSThreadKernel.h"
+#include "OS/OSMutexKernel.h"
 
 // Thread handler ID that we can use to manipulate a thread. 
 os_thread_t target_thread; 
@@ -137,10 +137,10 @@ void loop(){
 
 ```
 // RTOS module
-#include "OSThreadKernel.h"
+#include "OS/OSThreadKernel.h"
 
 // Low priority work thread module
-#include "lp_work_thread.h"
+#include "MODULES/LPWORK/lp_work_thread.h"
 
 // Periodic function that we want to run periodically. 
 void printhello(void){
@@ -163,6 +163,36 @@ void setup() {
 
 void loop() {
   os_thread_delay_ms(100);
+}
+
+```
+
+
+## Writing the the USB Serial in a threadsafe way
+```
+
+#include "OS/OSThreadKernel.h"
+#include "HAL/OSSerial.h"
+
+void setup(){
+  os_init(); 
+   
+  // Starts up the serial peripheral. 
+  os_usb_serial_begin(); 
+  
+  uint8_t buffer[16]; 
+  // Read in data from serial bus into buffer
+  os_usb_serial_read(buffer, sizeof(buffer)); 
+  
+  // Write data that we just took in back into the buffer
+  os_usb_write(buffer, sizeof(buffer); 
+    
+  // Checking how many bytes we have available. 
+  uint32_t current_bytes_in_array = os_usb_serial_bytes_available(); 
+}
+
+void loop(){
+  os_thread_delay_ms(100); 
 }
 
 ```
