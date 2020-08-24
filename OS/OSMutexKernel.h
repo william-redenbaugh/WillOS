@@ -3,7 +3,7 @@
 
 #include "OSThreadKernel.h"
 
-/*
+/*!
 * @brief The different states that one can get from the mutex
 */
 enum MutexLockState_t{
@@ -16,9 +16,9 @@ enum MutexLockReturnStatus{
   MUTEX_ACQUIRE_FAIL    = 0
 };
 
-/*
+/*!
 * @brief Object Reference to control our mutexes 
-* @notes So we can take care of our mutex stuff
+* @note So we can take care of our mutex stuff
 */
 class MutexLock{
   public: 

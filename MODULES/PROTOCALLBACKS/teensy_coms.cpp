@@ -1,8 +1,8 @@
 #include "teensy_coms.h"
 
-/*
+/*!
 *   @brief Maximum amount of callbacks handlers defined here,
-*   @notes Currently we limit it to 64 since the entire arrays are statically
+*   @note Currently we limit it to 64 since the entire arrays are statically
 *   defined. In the future we may use an array of pointers pointing to heap allocated objects. 
 *   That way if we aren't using that many we can save memory, and if we are using more then we can
 *   have the capacity to do that easily. 
@@ -13,9 +13,9 @@
 #define MESSAGE_MANAGEMENT_STACK_SIZE 1024
 static uint32_t message_management_stack[MESSAGE_MANAGEMENT_STACK_SIZE]; 
 
-/*
+/*!
 * @brief: Struct that helps us deal with message subroutine callbackets
-* @notes: Switched from linkedlist to predefined array for preformance reasons. 
+* @note Switched from linkedlist to predefined array for preformance reasons. 
 */
 struct MessageSubroutine{
     // Pass in function as arguement
@@ -38,19 +38,19 @@ static uint32_t callback_num = 0;
 // Lock surrounding the messagings. 
 static MutexLock MessageMutex;  
 
-/*
+/*!
 *   @brief The buffer that we have set asside for when larger objects come in. 
 */
 static uint8_t in_arr_buffer[4096];
 
-/*
+/*!
 *   @brief Thread ID handler for our message management hread. 
 */
 static os_thread_id_t message_management_thread_id; 
 
 static void run_messaging_once(void);
 
-/*
+/*!
 *   @brief The thread function that we will do all of our message management stuff in
 */
 void message_management_thread(void *parameters){
@@ -70,7 +70,7 @@ void message_management_thread(void *parameters){
     }
 }
 
-/*
+/*!
 *   @brief Once we have gotten a message header, then we read the remainder of the message. 
 */
 static void get_rest_of_message(uint32_t msg_size){
@@ -85,10 +85,10 @@ static void get_rest_of_message(uint32_t msg_size){
     }
 }
 
-/* 
+/*!
 * @brief Checks which of our request->response systems need to be interrupted 
 * @notes Should only be called from within the udp_message_management file
-* params MessageData message_data
+* param MessageData message_data
 * returns none
 */
 static void check_req_res(MessageData message_data){
@@ -117,7 +117,7 @@ static void check_req_res(MessageData message_data){
     }
 }
 
-/*
+/*!
 *   @brief Function that get's called roughly every 14ms to check thread stuff. 
 */
 static void run_messaging_once(void){
@@ -141,13 +141,12 @@ static void run_messaging_once(void){
     MessageMutex.unlock(); 
 }
 
-/* 
+/*!
 * @brief Easy method for dealing with new messages coming into the system 
-* @notes Just makes callbacks easy to deal with, you still need to deal with the deserialization
-* And unpacking yourself. 
-* params MessageData_MessageType which type of message data are we sending?
-* params void(*func)(MessageReq *ptr) callback for dealing with subroutines. 
-* returns Callbackor not we actually go the information we needed and the handler ID
+* @note Just makes callbacks easy to deal with, you still need to deal with the deserializatio and unpacking yourself. 
+* @param MessageData_MessageType which type of message data are we sending?
+* @param void(*func)(MessageReq *ptr) callback for dealing with subroutines. 
+* @returns Callbackor not we actually go the information we needed and the handler ID
 */
 extern MessageCallbackSetupReturn add_message_callback(MessageData_MessageType msg_type, void(*func)(MessageReq *ptr)){
     // Message we are going to return to the ownership function
@@ -197,9 +196,9 @@ extern MessageCallbackSetupReturn add_message_callback(MessageData_MessageType m
     return setup_return; 
 }
 
-/*
+/*!
 *   @brief Removes a message callback, so we aren't getting callbacks from that anymore 
-*   @params uint32_t callback_handler_id(which thread are we trying to remove)
+*   @param uint32_t callback_handler_id(which thread are we trying to remove)
 *   @returns Whether or not we were able to remove the callback and why. 
 */
 extern MessageCallbackSetupStatus remove_message_callback(uint32_t callback_handler_id){
@@ -213,9 +212,9 @@ extern MessageCallbackSetupStatus remove_message_callback(uint32_t callback_hand
     return CALLBACK_REMOVE_SUCCESS; 
 }
 
-/*
+/*!
 *   @brief  Starts up all of the message management stuff so we can get messages!
-*   @notes  Just call this, and then attach whatever event driven messaging stuff you feel you need to do 
+*   @note  Just call this, and then attach whatever event driven messaging stuff you feel you need to do 
 */
 void message_callbacks_begin(void){
     // Starts up the serial interface.
@@ -225,7 +224,7 @@ void message_callbacks_begin(void){
     message_management_thread_id = os_add_thread(&message_management_thread, NULL, MESSAGE_MANAGEMENT_STACK_SIZE, &message_management_stack);
 }
 
-/*
+/*!
 *   @brief Kills the message management thread. 
 */
 void message_callbacks_end(void){

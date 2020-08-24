@@ -1,24 +1,24 @@
 #include "OSSignalKernel.h"
 
-/*
+/*!
 *   @brief Signals a bit
-*   @params thread_signal_t which signal we are setting
+*   @param thread_signal_t which signal we are setting
 */
 void OSSignal::signal(thread_signal_t thread_signal){
     this->bits |= (1 << (uint32_t)thread_signal);
 }
 
-/*
+/*!
 *   @brief clears a bit
-*   @params thread_signal_t which signal we are clearing
+*   @param thread_signal_t which signal we are clearing
 */
 void OSSignal::clear(thread_signal_t thread_signal){
     this->bits &= ~(1 << (uint32_t)thread_signal);
 }
 
-/*
+/*!
 *   @brief Checks to see if a bit is cleared or set
-*   @params thread_signal_t which bit we want to check
+*   @param thread_signal_t which bit we want to check
 *   @returns The status of the signal we are checking 
 */
 bool OSSignal::check(thread_signal_t thread_signal){
@@ -27,10 +27,10 @@ bool OSSignal::check(thread_signal_t thread_signal){
     return false;    
 }
 
-/*
+/*!
 *   @brief Checks to see if a bit is cleared or set
-*   @params thread_signal_t which bit we want to check
-*   @params uint32_t timeout_ms timeout or max time we are willing to wait for bits to clear
+*   @param thread_signal_t which bit we want to check
+*   @param uint32_t timeout_ms timeout or max time we are willing to wait for bits to clear
 *   @returns whether or or not we we able to get set bits or not
 */
 bool OSSignal::wait(thread_signal_t thread_signal, uint32_t timeout_ms){
@@ -52,9 +52,9 @@ bool OSSignal::wait(thread_signal_t thread_signal, uint32_t timeout_ms){
     }
 }
 
-/*
+/*!
 *   @brief Waits for bits to be set indefinitly
-*   @params thread_signal_t thread_signal to be sete
+*   @param thread_signal_t thread_signal to be sete
 */
 void OSSignal::wait_notimeout(thread_signal_t thread_signal){
     while(1){
@@ -65,7 +65,7 @@ void OSSignal::wait_notimeout(thread_signal_t thread_signal){
     }   
 }
 
-/*
+/*!
 *   @returns The raw bits that we are using
 */
 uint32_t OSSignal::bits_return(void){

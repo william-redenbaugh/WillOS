@@ -5,7 +5,7 @@ Author: William Redenbaugh, Fernando Trias
 Last Edit Date: 8/9/2020
 */
 
-/*
+/*!
 * @brief Allows us to check the current state of our mutex
 * @returns MutexLockState_t state of the mutex
 */
@@ -16,9 +16,9 @@ MutexLockState_t MutexLock::getState(void){
   return state; 
 }
 
-/*
+/*!
 * @brief Allows us to lock our mutex
-* @params timeout_ms
+* @param timeout_ms
 * @returns MutexLockReturnStatus or whether or not we were able to get the mutex
 */
 MutexLockReturnStatus __attribute__ ((noinline)) MutexLock::lock(uint32_t timeout_ms){
@@ -47,7 +47,7 @@ MutexLockReturnStatus __attribute__ ((noinline)) MutexLock::lock(uint32_t timeou
   return MUTEX_ACQUIRE_FAIL;
 }
 
-/*
+/*!
 * @brief Attempt to lock the mutex without timeout. 
 * @returns MutexLockReturnState state of whether or not we locked the mutex or not
 */
@@ -71,7 +71,7 @@ MutexLockReturnStatus MutexLock::tryLock(void){
   return MUTEX_ACQUIRE_FAIL;
 }
 
-/*
+/*!
 * @brief Waits for the lock indefinitely
 */
 void __attribute__ ((noinline)) MutexLock::lockWaitIndefinite(void){
@@ -92,7 +92,7 @@ void __attribute__ ((noinline)) MutexLock::lockWaitIndefinite(void){
   return;
 }
 
-/*
+/*!
 * @brief Unlocks a mutex if it hasn't been otherwise locked. 
 */
 void __attribute__ ((noinline)) MutexLock::unlock(void){
