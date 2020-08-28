@@ -41,7 +41,7 @@ static MutexLock MessageMutex;
 /*!
 *   @brief The buffer that we have set asside for when larger objects come in. 
 */
-static uint8_t in_arr_buffer[4096];
+static uint8_t in_arr_buffer[512];
 
 /*!
 *   @brief Thread ID handler for our message management hread. 
