@@ -1,3 +1,6 @@
 [submodule "Will-OS-Teensy-Example/lib/TeensyThreads"]
 	path = Will-OS-Teensy-Example/lib/TeensyThreads
 	url = git@github.com:william-redenbaugh/TeensyThreads.git
+[submodule "MODULES/PROTOCALLBACKS/nanopb"]
+	path = MODULES/PROTOCALLBACKS/nanopb
+	url = git@github.com:william-redenbaugh/nanopb.git
