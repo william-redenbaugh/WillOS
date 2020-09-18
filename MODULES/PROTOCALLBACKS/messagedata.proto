@@ -1,0 +1,21 @@
+syntax = "proto3"; 
+
+message MessageData{
+    // If we want to have additional metadata per Animation
+    uint32 message_size = 1; 
+
+    // Different Signaling Animation
+    enum MessageType{
+        BIKE_LED_SIGNAL_STOP             = 0;
+        BIKE_LED_SIGNAL_STOP_FAST        = 1;
+        BIKE_LED_SIGNAL_WHITE            = 2;
+        BIKE_LED_SIGNAL_TURN_LEFT        = 3; 
+        BIKE_LED_SIGNAL_TURN_LEFT_STOP   = 4;
+        BIKE_LED_SIGNAL_TURN_RIGHT       = 5; 
+        BIKE_LED_SIGNAL_TURN_RIGHT_STOP  = 6; 
+    }
+
+    MessageType message_type = 2; 
+
+    bool return_message = 3; 
+}
