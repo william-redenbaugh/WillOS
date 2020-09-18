@@ -189,9 +189,9 @@ static inline void i2c_setup_gyroscope(mpu_gyro_range_t g_range){
     // Set's gyro range 
     // Set FS_SEL and AFS_SEL bitmasks. 
     register uint8_t buffer = i2c_read_byte(GYRO_CONFIG); 
-    i2c_write_byte(GYRO_CONFIG, buffer & ~0xE0);            // Clear self test bits[7:5] 
-    i2c_write_byte(GYRO_CONFIG, buffer & ~0x18);            // Clear AFS bits
-    i2c_write_byte(GYRO_CONFIG, buffer | (uint8_t)g_range); // Set full range for gyroscope
+    buffer &= 0b11100111; 
+    buffer |= (((uint8_t)g_range) << 3); 
+    i2c_write_byte(GYRO_CONFIG, buffer | ((uint8_t)gyroscope_range << 3)); // Set full range for gyroscope
 }
 
 /*!
@@ -200,9 +200,9 @@ static inline void i2c_setup_gyroscope(mpu_gyro_range_t g_range){
 */
 static inline void i2c_setup_accelerometer(mpu_accelerometer_range_t a_range){
     register uint8_t buffer = i2c_read_byte(ACCEL_CONFIG); 
-    i2c_write_byte(ACCEL_CONFIG, buffer & ~0xE0);            // Clear self test bits[7:5] 
-    i2c_write_byte(ACCEL_CONFIG, buffer & ~0x18);            // Clear AFS bits
-    i2c_write_byte(ACCEL_CONFIG, buffer | (uint8_t)a_range); // Set full range for gyroscope
+    buffer &= 0b11100111;
+    buffer |= (((uint8_t)a_range) << 3); 
+    i2c_write_byte(ACCEL_CONFIG, buffer | ((uint8_t)a_range << 3)); // Set full range for gyroscope
 }
 
 /*!
@@ -324,18 +324,18 @@ accel_data_g translate_accel_raw_g(imu_data_raw raw_dat){
     accel_data_g dat;
     switch(accelerometer_range){
     case(ACCELEROMETER_2G):
-        convert_accel_raw_g_helper(&dat, &raw_dat, 32768.0);
+        convert_accel_raw_g_helper(&dat, &raw_dat, 16384.0);
     break; 
     case(ACCELEROMETER_4G):
-        convert_accel_raw_g_helper(&dat, &raw_dat, 16384.0);
+        convert_accel_raw_g_helper(&dat, &raw_dat, 8182.0);
     break; 
     
     case(ACCELEROMETER_8G):
-        convert_accel_raw_g_helper(&dat, &raw_dat, 8192.0);
+        convert_accel_raw_g_helper(&dat, &raw_dat, 4096.0);
     break; 
     
     case(ACCELEROMETER_16G):
-        convert_accel_raw_g_helper(&dat, &raw_dat, 4096.0);
+        convert_accel_raw_g_helper(&dat, &raw_dat, 2048.0);
     break; 
     default: 
     break; 

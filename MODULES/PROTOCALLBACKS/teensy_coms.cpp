@@ -240,7 +240,8 @@ extern MessageCallbackSetupStatus remove_message_callback(uint32_t callback_hand
 */
 void message_callbacks_begin(HardwareSerial *serial_ptr, uint32_t baud){
     serial = serial_ptr; 
-
+    // Start up the serial device. 
+    serial->begin(baud); 
     // We have our own thread that deals with the message management stuff. 
     message_management_thread_id = os_add_thread(&message_management_thread, NULL, MESSAGE_MANAGEMENT_STACK_SIZE, &message_management_stack);
 }

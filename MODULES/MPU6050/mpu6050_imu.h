@@ -26,10 +26,10 @@ typedef enum{
 *   @brief Enumerated accelerometer ranges defined so  we can send the bounds of the device. 
 */  
 typedef enum{
-    ACCELEROMETER_2G,
-    ACCELEROMETER_4G,
-    ACCELEROMETER_8G,
-    ACCELEROMETER_16G
+    ACCELEROMETER_2G = 0,
+    ACCELEROMETER_4G = 1,
+    ACCELEROMETER_8G = 2,
+    ACCELEROMETER_16G = 3
 }mpu_accelerometer_range_t; 
 
 /*!
