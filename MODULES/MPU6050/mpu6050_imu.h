@@ -2,7 +2,7 @@
 #define MPU6050_IMU_H
 
 #include <Arduino.h> 
-#include <Wire.h> 
+#include <Wire.h>
 
 #include "OS/OSMutexKernel.h"
 #include "OS/OSSignalKernel.h"
