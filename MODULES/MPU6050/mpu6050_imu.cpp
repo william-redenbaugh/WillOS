@@ -124,6 +124,7 @@ mpu_init_status_t init_mpu6050(uint8_t i2c_address, mpu_accelerometer_range_t a_
 static inline void i2c_setup_gyroscope(mpu_gyro_range_t g_range);
 static inline void i2c_setup_accelerometer(mpu_accelerometer_range_t a_range); 
 imu_data_raw get_latest_mpu6050_data(bool blocking); 
+imu_data_raw get_latest_mpu6050_data_sampled(uint16_t samples);
 static inline void get_mpu6050_gyro_data(imu_data_raw *dat); 
 static inline void get_mpu6050_accelerometer_data(imu_data_raw *dat); 
 static void i2c_read_bytes(uint8_t sub_addr, uint8_t count, uint8_t *dest); 
@@ -145,7 +146,6 @@ gyro_data_d_s translate_gyro_raw_d_s(imu_data_raw raw_dat);
 mpu_init_status_t init_mpu6050(uint8_t i2c_address, mpu_accelerometer_range_t a_range, mpu_gyro_range_t g_range){
     // Start up the i2c device. 
     Wire.begin(); 
-
     // Save these for use during conversions
     accelerometer_range = a_range; 
     gyroscope_range = g_range; 
@@ -231,6 +231,54 @@ imu_data_raw get_latest_mpu6050_data(bool blocking){
         get_mpu6050_accelerometer_data(&dat); 
         get_mpu6050_gyro_data(&dat); 
     }
+    return dat; 
+}
+
+/*!
+*   @brief Function that lets us get a group of sampled data from the imu to prevent outliers causing issues. 
+*   @param uint16_t (number of samples )
+*/
+imu_data_raw get_latest_mpu6050_data_sampled(uint16_t samples){
+    imu_data_raw dat;
+    
+    // Buffer of data that we will use to help with filtering. 
+    int32_t a_x = 0, a_y = 0, a_z = 0 , g_x = 0, g_y = 0, g_z = 0; 
+
+    for(int n = 0; n < samples; n++){
+        // Sit and wait for new data to come in 
+        while(!(i2c_read_byte(INT_STATUS) & 0x01))
+            _os_yield();    // Since this module is built into Will-OS, we call the os yield
+
+        // We were able to get data successfully. 
+        dat.success = true; 
+        get_mpu6050_accelerometer_data(&dat); 
+        get_mpu6050_gyro_data(&dat);
+        
+        // Adding all the data together.  
+        a_x += dat.a_x; 
+        a_y += dat.a_y; 
+        a_z += dat.a_z;
+        g_x += dat.g_x; 
+        g_y += dat.g_y; 
+        g_z += dat.g_z; 
+    }
+
+    // Averaging out the accelerometer and gyroscope data. 
+    a_x /= samples; 
+    a_y /= samples; 
+    a_z /= samples; 
+    g_x /= samples; 
+    g_y /= samples; 
+    g_z /= samples; 
+
+    // Fill data back into struct. 
+    dat.a_x = a_x; 
+    dat.a_y = a_y; 
+    dat.a_z = a_z; 
+    dat.g_x = g_x; 
+    dat.g_y = g_y; 
+    dat.g_z = g_z; 
+
     return dat; 
 }
 

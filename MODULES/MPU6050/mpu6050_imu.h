@@ -83,6 +83,7 @@ typedef struct{
 
 mpu_init_status_t init_mpu6050(uint8_t i2c_address, mpu_accelerometer_range_t a_range, mpu_gyro_range_t g_range); 
 imu_data_raw get_latest_mpu6050_data(bool blocking); 
+imu_data_raw get_latest_mpu6050_data_sampled(uint16_t samples); 
 accel_data_g translate_accel_raw_g(imu_data_raw raw_dat); 
 accel_data_ms2 translate_accel_g_ms2(accel_data_g dat_g); 
 gyro_data_d_s translate_gyro_raw_d_s(imu_data_raw raw_dat); 
