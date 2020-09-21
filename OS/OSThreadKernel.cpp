@@ -451,12 +451,15 @@ inline void os_get_next_thread() {
       break;
     }
     if (system_threads[current_thread_id]){
-      if(system_threads[current_thread_id]->flags == THREAD_RUNNING && system_threads[current_thread_id]->next_run_ms <= millis())
+      if(system_threads[current_thread_id]->flags == THREAD_RUNNING)
         break; 
 
       if(system_threads[current_thread_id]->flags == THREAD_SLEEPING)
-        if(system_threads[current_thread_id]->next_run_ms <= millis())
-        break; 
+        // If a thread is ready to be awoken, we get to it!
+        if(system_threads[current_thread_id]->next_run_ms <= millis()){
+          system_threads[current_thread_id]->flags = THREAD_RUNNING; 
+          break; 
+        }
     }
   }
 
