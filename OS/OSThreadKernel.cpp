@@ -329,10 +329,14 @@ extern "C" void _os_yield(void){
 */
 extern void os_thread_delay_ms(int millisecond){
   int start_del = millis();
-  // So let the hypervisor take us away from this thread, and check 
-  // Each millisecond 
-  while((int)millis() - start_del < millisecond)
-    _os_yield();
+
+  // So the operating system knows when to start back up the next thread. 
+  current_thread->next_run_ms = start_del + millisecond; 
+  // Tells program to start sleeping. 
+  current_thread->flags = THREAD_SLEEPING; 
+
+  // Yields to operating system call
+  _os_yield(); 
 }
 
 /*!
@@ -439,14 +443,21 @@ inline void os_get_next_thread() {
     stack_overflow_isr();
   }
 
-  // Find the next THREAD_running thread
+  // Find the next thread that needs to be run
   while(1) {
     current_thread_id++;
     if (current_thread_id >= MAX_THREADS) {
       current_thread_id = 0; // thread 0 is MSP; always active so return
       break;
     }
-    if (system_threads[current_thread_id] && system_threads[current_thread_id]->flags == THREAD_RUNNING) break;
+    if (system_threads[current_thread_id]){
+      if(system_threads[current_thread_id]->flags == THREAD_RUNNING && system_threads[current_thread_id]->next_run_ms <= millis())
+        break; 
+
+      if(system_threads[current_thread_id]->flags == THREAD_SLEEPING)
+        if(system_threads[current_thread_id]->next_run_ms <= millis())
+        break; 
+    }
   }
 
   current_tick_count = system_threads[current_thread_id]->ticks;
@@ -515,7 +526,7 @@ void *os_loadstack(thread_func_t p, void * arg, void *stackaddr, int stack_size)
 * @param int stack_size(size of the allocated threadstack)
 * @returns none
 */
-os_thread_id_t os_add_thread(thread_func_t p, void * arg, int stack_size, void *stack){
+os_thread_id_t os_add_thread(thread_func_t p, void * arg, uint8_t thread_priority, int stack_size, void *stack){
   int old_state = os_stop();
 
   // If we don't allocate a valid stack size, then we just choose the default stack size
@@ -552,9 +563,10 @@ os_thread_id_t os_add_thread(thread_func_t p, void * arg, int stack_size, void *
       tp->ticks = OS_DEFAULT_TICKS;
       tp->flags = THREAD_RUNNING;
       tp->save.lr = 0xFFFFFFF9;
-
       current_active_state = old_state;
       thread_count++;
+      // How important is this thread?
+      tp->thread_priority = thread_priority; 
       
       // If the operating system was started before, we restart the OS
       if (old_state == OS_STARTED || old_state == OS_FIRST_RUN) 
@@ -571,6 +583,17 @@ os_thread_id_t os_add_thread(thread_func_t p, void * arg, int stack_size, void *
 }
 
 /*!
+* @brief Adds a thread to Will-OS Kernel
+* @note Paralelism at it's finest!
+* @param will_os_thread_func_t thread(pointer to thread function call begining of program counter)
+* @param void *arg(pointer arguement to parameters for thread)
+* @param void *stack(pointer to begining of thread stack)
+* @param int stack_size(size of the allocated threadstack)
+* @returns none
+*/
+os_thread_id_t os_add_thread(thread_func_t p, void * arg, int stack_size, void *stack){return os_add_thread(p, arg, 128, stack_size, stack);}
+
+/*!
 *   @brief Allows us to change the Will-OS System tick. 
 *   @note If you want more precision in your system ticks, take care of this here. 
 *   @param int tick_microseconds
@@ -584,7 +607,7 @@ bool os_set_microsecond_timer(int tick_microseconds){
 * @brief Sets the state of a thread to suspended. 
 * @brief If thread doesn't exist, then 
 * @param Which thread are we trying to get our state for
-* @returns will_thread_state_t
+* @returns os_thread_id_t
 */
 os_thread_id_t os_suspend_thread(os_thread_id_t target_thread_id){
   if(target_thread_id < thread_count){
@@ -599,7 +622,7 @@ os_thread_id_t os_suspend_thread(os_thread_id_t target_thread_id){
 * @brief Sets the state of a thread to resumed. 
 * @brief If thread doesn't exist or hasn't been run before, then 
 * @param Which thread are we trying to get our state for
-* @returns will_thread_state_t
+* @returns os_thread_id_t
 */
 os_thread_id_t os_resume_thread(os_thread_id_t target_thread_id){
   if(target_thread_id < thread_count){
@@ -617,7 +640,7 @@ os_thread_id_t os_resume_thread(os_thread_id_t target_thread_id){
 * @note in the future we should work on this 
 * @note Meaning  
 * @param Which thread are we trying to get our state for
-* @returns will_thread_state_t
+* @returns os_thread_id_t
 */
 os_thread_id_t os_kill_thread(os_thread_id_t target_thread_id){
   if(target_thread_id < thread_count)
@@ -630,7 +653,7 @@ os_thread_id_t os_kill_thread(os_thread_id_t target_thread_id){
 * @brief Gets the state of a thread. 
 * @brief If thread doesn't exist, then 
 * @param Which thread are we trying to get our state for
-* @returns will_thread_state_t
+* @returns os_thread_id_t
 */
 thread_state_t os_get_thread_state(os_thread_id_t target_thread_id){
   if(target_thread_id < thread_count)

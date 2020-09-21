@@ -146,6 +146,9 @@ gyro_data_d_s translate_gyro_raw_d_s(imu_data_raw raw_dat);
 mpu_init_status_t init_mpu6050(uint8_t i2c_address, mpu_accelerometer_range_t a_range, mpu_gyro_range_t g_range){
     // Start up the i2c device. 
     Wire.begin(); 
+    // Tryna overclock. 
+    Wire.setClock(600000);
+
     // Save these for use during conversions
     accelerometer_range = a_range; 
     gyroscope_range = g_range; 
