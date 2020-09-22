@@ -439,27 +439,27 @@ inline void os_get_next_thread() {
 
   // did we overflow the stack (don't check thread 0)?
   // allow an extra 8 bytes for a call to the ISR and one additional call or variable
-  if (current_thread_id && ((uint8_t*)current_thread->sp - current_thread->stack <= 8)) {
+  if (current_thread_id && ((uint8_t*)current_thread->sp - current_thread->stack <= 8)) 
     stack_overflow_isr();
-  }
-
-  // Find the next thread that needs to be run
+  
   while(1) {
     current_thread_id++;
-    if (current_thread_id >= MAX_THREADS) {
+    if (current_thread_id >= MAX_THREADS | current_thread_id > thread_count){
       current_thread_id = 0; // thread 0 is MSP; always active so return
       break;
     }
+
     if (system_threads[current_thread_id]){
       if(system_threads[current_thread_id]->flags == THREAD_RUNNING)
         break; 
 
-      if(system_threads[current_thread_id]->flags == THREAD_SLEEPING)
+      if(system_threads[current_thread_id]->flags == THREAD_SLEEPING){
         // If a thread is ready to be awoken, we get to it!
         if(system_threads[current_thread_id]->next_run_ms <= millis()){
           system_threads[current_thread_id]->flags = THREAD_RUNNING; 
           break; 
         }
+      }
     }
   }
 

@@ -279,6 +279,8 @@ void threads_svcall_isr(void);
 * @note  n/a
 */
 void threads_systick_isr(void);
+
+// End of extern c programgs. 
 }
 
 /*!
