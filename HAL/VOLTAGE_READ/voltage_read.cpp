@@ -1,6 +1,11 @@
 #include "voltage_read.h"
 
 /*!
+*   @brief What's the resolution of our ADC(in bits)
+*/
+static const int VOLTAGE_READ_RESOLUTION = 12; 
+
+/*!
 *   @brief Setup function that get's Voltage reading properly. 
 *   @param uint8_t gpio(pin that we are using on the teensy)
 *   @param uint8_t divider(or how much we are cutting down the voltage compared to the input analog voltage. )
@@ -11,7 +16,7 @@ void VoltageRead::init(uint8_t gpio, uint8_t divider){
     this->divider = divider;
     // Setting up the gpio pin to what I want.  
     pinMode(gpio, INPUT); 
-    analogReadResolution(16); 
+    analogReadResolution(VOLTAGE_READ_RESOLUTION); 
 }
 
 /*!
@@ -19,7 +24,15 @@ void VoltageRead::init(uint8_t gpio, uint8_t divider){
 *   @return Voltage(as a floating point decimal)
 */
 float VoltageRead::getVoltage(void){
-    return float(analogRead(this->gpio))/float(this->divider); 
+    // Convert read into to float
+    register float read = float(analogRead(this->gpio));
+    // How many bits are we using? so we create a ratio
+    read /= (1 << VOLTAGE_READ_RESOLUTION); 
+    // Multiply by base analog voltage(3.3 input)
+    read *= 3.3; 
+    // Since we are likely to be using a voltage divider, 
+    read *= float(this->divider); 
+    return read; 
 }
 
 /*!

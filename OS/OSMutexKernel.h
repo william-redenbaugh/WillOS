@@ -11,14 +11,16 @@ enum MutexLockState_t{
   MUTEX_LOCKED
 };
 
+/*!
+* @brief Enumerated success or failiure of acquiring the mutex
+*/
 enum MutexLockReturnStatus{
   MUTEX_ACQUIRE_SUCESS  = 1, 
   MUTEX_ACQUIRE_FAIL    = 0
 };
 
 /*!
-* @brief Object Reference to control our mutexes 
-* @note So we can take care of our mutex stuff
+* @brief Object descriptor to control a semaphore 
 */
 class MutexLock{
   public: 

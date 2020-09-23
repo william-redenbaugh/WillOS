@@ -328,7 +328,7 @@ static void i2c_read_bytes(uint8_t sub_addr, uint8_t count, uint8_t *dest){
     Wire.requestFrom(device_address, count); 
     while(Wire.available()){
         dest[n++] = Wire.read(); 
-    }
+    } 
 }
 
 /*!
