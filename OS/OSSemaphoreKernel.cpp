@@ -22,13 +22,13 @@ uint32_t SemaphoreLock::getState(void){
 * @returns SemaphoreLockReturnStatus or whether or not we were able to get the mutex
 */
 SemaphoreLockReturnStatus __attribute__ ((noinline))SemaphoreLock::entry(uint32_t timeout_ms){
-    if(this->tryEntry() == SEMAPHORE_ACQUIRE_SUCCESS)
+    if(this->tryEntry())
         return SEMAPHORE_ACQUIRE_SUCCESS; 
 
     uint32_t start = millis(); 
 
     while(1){
-        if(this->tryEntry() == SEMAPHORE_ACQUIRE_SUCCESS)
+        if(this->tryEntry())
             return SEMAPHORE_ACQUIRE_SUCCESS;
 
         // If we can't acquire the lock :(
@@ -46,7 +46,7 @@ SemaphoreLockReturnStatus __attribute__ ((noinline))SemaphoreLock::entry(uint32_
 
 /*!
 *   @brief Trying to enter our semaphore
-* @returns SemaphoreLockReturnStatus or whether or not we were able to get the mutex
+*   @returns SemaphoreLockReturnStatus or whether or not we were able to get the mutex
 */
 SemaphoreLockReturnStatus SemaphoreLock::tryEntry(void){
     int os_state = os_stop(); 
@@ -66,11 +66,11 @@ SemaphoreLockReturnStatus SemaphoreLock::tryEntry(void){
 * @brief Waits for the semaphore indefinitely
 */
 void __attribute__ ((noinline)) SemaphoreLock::entryWaitIndefinite(void){
-    if(this->tryEntry() == SEMAPHORE_ACQUIRE_SUCCESS)
+    if(this->tryEntry())
         return; 
     
     while(1){
-        if(this->tryEntry() == SEMAPHORE_ACQUIRE_SUCCESS)
+        if(this->tryEntry())
             return;
         _os_yield(); 
     }

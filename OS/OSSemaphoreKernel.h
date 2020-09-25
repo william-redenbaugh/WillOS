@@ -12,16 +12,31 @@ enum SemaphoreLockReturnStatus{
     SEMAPHORE_ACQUIRE_FAIL = 0, 
 }; 
 
-
-
 /*!
 *   @brief Object descriptor to control a semaphore
 *   @brief By default a binary semaphore()
 */
 class SemaphoreLock{
     public: 
+
+        /*!
+        *   @brief Get's the current entrants / states of the semaphore 
+        *   @return SemaphoreLockState_t state of the semaphore
+        */
         uint32_t getState(void); 
+        
+        /*!
+        * @brief Allows us to acquire our semaphore
+        * @param timeout_ms
+        * @returns SemaphoreLockReturnStatus or whether or not we were able to get the mutex
+        */
         SemaphoreLockReturnStatus entry(uint32_t timeout_ms); 
+        
+        /*!
+        * @brief Allows us to acquire our semaphore
+        * @param timeout_ms
+        * @returns SemaphoreLockReturnStatus or whether or not we were able to get the mutex
+        */
         SemaphoreLockReturnStatus tryEntry(void); 
 
         /*!
@@ -35,6 +50,9 @@ class SemaphoreLock{
         void exit(void); 
 
     private: 
+        /*!
+        *   @brief 
+        */
         volatile uint32_t state = 0; 
         uint32_t max_entry = 1; 
 }; 
