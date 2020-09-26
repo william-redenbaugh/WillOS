@@ -1,6 +1,11 @@
 #ifndef _TEENSY_COMS_H
 #define _TEENSY_COMS_H
 
+// So we can configure modules
+#include "../../../enabled_modules.h"
+
+#ifdef PROTOCALLBACKS_MODULE
+
 // Include Arduino's primary libraries. 
 #include <Arduino.h> 
 
@@ -76,3 +81,4 @@ void message_callbacks_begin(HardwareSerial *serial_ptr, uint32_t baud);
 void message_callbacks_end(void);
 
 #endif 
+#endif

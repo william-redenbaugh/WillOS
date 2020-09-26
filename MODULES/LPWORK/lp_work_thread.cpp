@@ -1,6 +1,8 @@
 #include "lp_work_thread.h"
 #include <vector>
 
+#ifdef LPWORK_MODULE
+
 /*
 Author: William Redenbaugh
 Last Edit Date: 8/24/2020
@@ -207,3 +209,4 @@ extern LPThreadInitStatus_t del_lwip_task(uint32_t thread_handle){
     }
     return LP_THREAD_DELETE_UNDEFINED; 
 }
+#endif

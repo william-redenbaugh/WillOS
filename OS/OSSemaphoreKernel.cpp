@@ -1,5 +1,7 @@
 #include "OSSemaphoreKernel.h"
 
+#ifdef SEMAPHORE_MODULE
+
 /*!
 *   Author: William Redenbaugh
 *   Last Edite Date: 9/23/2020
@@ -87,3 +89,5 @@ void __attribute__ ((noinline)) SemaphoreLock::exit(void){
     __flush_cpu_pipeline(); 
     os_start(os_state); 
 }
+
+#endif

@@ -1,6 +1,11 @@
 #ifndef _OSMUTEXKERNEL_H
 #define _OSMUTEXKERNEL_H
 
+// So we can configure modules
+#include "../../enabled_modules.h"
+
+#ifdef MUTEX_MODULE
+
 #include "OSThreadKernel.h"
 
 /*!
@@ -35,4 +40,5 @@ class MutexLock{
     volatile MutexLockState_t state = MUTEX_UNLOCKED;
 };
 
+#endif
 #endif 

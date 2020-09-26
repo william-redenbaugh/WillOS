@@ -1,4 +1,5 @@
 #include "OSMutexKernel.h"
+#ifdef MUTEX_MODULE
 
 /*
 Author: William Redenbaugh, Fernando Trias
@@ -101,3 +102,5 @@ void __attribute__ ((noinline)) MutexLock::unlock(void){
   __flush_cpu_pipeline();
   os_start(os_state);
 } 
+
+#endif

@@ -1,5 +1,7 @@
 #include "teensy_coms.h"
 
+#ifdef PROTOCALLBACKS_MODULE
+
 /*!
 *   @brief Maximum amount of callbacks handlers defined here,
 *   @note Currently we limit it to 64 since the entire arrays are statically
@@ -253,3 +255,5 @@ void message_callbacks_end(void){
     // We kill our thread if prompted to end our message management callbacks
     os_kill_thread(message_management_thread_id); 
 }
+
+#endif

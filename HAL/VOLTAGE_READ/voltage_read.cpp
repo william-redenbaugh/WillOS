@@ -1,5 +1,7 @@
 #include "voltage_read.h"
 
+#ifdef VOLTAGE_READ_MODULE
+
 /*!
 *   @brief What's the resolution of our ADC(in bits)
 */
@@ -69,3 +71,5 @@ float VoltageRead::batteryPercentage(void){
     // Should return a percentage. 
     return (current_voltage - this->min_bounds) / this->delta; 
 }
+
+#endif 

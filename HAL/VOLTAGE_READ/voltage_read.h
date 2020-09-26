@@ -1,6 +1,11 @@
 #ifndef _VOLTAGE_READ_H
 #define _VOLTAGE_READ_H
 
+// So we can configure modules
+#include "../../../enabled_modules.h"
+
+#ifdef VOLTAGE_READ_MODULE
+
 // Primary Arduino Module 
 #include <Arduino.h>
 
@@ -23,4 +28,5 @@ class VoltageRead{
         float delta; 
 }; 
 
+#endif
 #endif 

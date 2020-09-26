@@ -1,5 +1,7 @@
 #include "OSSignalKernel.h"
 
+#ifdef SIGNALING_MODULE
+
 /*!
 *   @brief Signals a bit
 *   @param thread_signal_t which signal we are setting
@@ -101,3 +103,4 @@ void OSSignal::wait_notimeout(thread_signal_t thread_signal){
 uint32_t OSSignal::bits_return(void){
     return this->bits; 
 }
+#endif

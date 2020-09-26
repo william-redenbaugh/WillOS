@@ -1,6 +1,11 @@
 #ifndef _OSSEMAPHOREKERNEL_H
 #define _OSSEMAPHOREKERNEL_H
 
+// So we can configure modules
+#include "../../enabled_modules.h"
+
+#ifdef SEMAPHORE_MODULE
+
 #include <Arduino.h> 
 #include "OSThreadKernel.h"
 
@@ -57,4 +62,5 @@ class SemaphoreLock{
         uint32_t max_entry = 1; 
 }; 
 
+#endif
 #endif 
