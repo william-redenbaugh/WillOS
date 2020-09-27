@@ -83,7 +83,7 @@ struct scheduler_info{
   * complexity and possibly bugs. So to simplifiy for now, we use an array.
   * But in the future, a linked list might be more appropriate.
 */
-thread_t *system_threads[MAX_THREADS];
+thread_t system_threads[MAX_THREADS];
 
 // These variables are used by the assembly context_switch() function.
 // They are copies or pointers to data in Threads and thread_t
@@ -346,11 +346,11 @@ extern void os_thread_delay_ms(int millisecond){
 */
 void  __attribute__((always_inline)) os_setup_thread_zero(void){
   // fill thread 0, which is always THREAD_running
-  system_threads[0] = new thread_t();
-  system_threads[0]->flags = THREAD_RUNNING;
-  system_threads[0]->ticks = OS_DEFAULT_TICKS;
-  system_threads[0]->stack = (uint8_t*)&_estack - DEFAULT_STACK0_SIZE;
-  system_threads[0]->stack_size = DEFAULT_STACK0_SIZE;
+  // system_threads[0] = new thread_t();
+  system_threads[0].flags = THREAD_RUNNING;
+  system_threads[0].ticks = OS_DEFAULT_TICKS;
+  system_threads[0].stack = (uint8_t*)&_estack - DEFAULT_STACK0_SIZE;
+  system_threads[0].stack_size = DEFAULT_STACK0_SIZE;
   thread_count++;
 }
 
@@ -376,15 +376,14 @@ inline void __attribute__((always_inline))os_setup_t4_isr_timers(void){
 */
 void threads_init(void){
   // initilize thread slots to THREAD_empty
-  for(int i=0; i<MAX_THREADS; i++) {
-    system_threads[i] = NULL;
-  }
+  for(int i=0; i<MAX_THREADS; i++) 
+    system_threads[i].flags = THREAD_EMPTY; 
 
   os_setup_thread_zero();
 
   // initialize context_switch() globals from thread 0, which is MSP and always THREAD_running
-  current_thread = system_threads[0];        // thread 0 is active
-  current_save = &system_threads[0]->save;
+  current_thread = &system_threads[0];        // thread 0 is active
+  current_save = &system_threads[0].save;
   current_msp = 1;
   current_sp = 0;
   current_tick_count = OS_DEFAULT_TICKS;
@@ -450,25 +449,23 @@ inline void os_get_next_thread() {
       break;
     }
 
-    if (system_threads[current_thread_id]){
-      if(system_threads[current_thread_id]->flags == THREAD_RUNNING)
-        break; 
+    if(system_threads[current_thread_id].flags == THREAD_RUNNING)
+      break; 
 
-      if(system_threads[current_thread_id]->flags == THREAD_SLEEPING){
-        // If a thread is ready to be awoken, we get to it!
-        if(system_threads[current_thread_id]->next_run_ms <= millis()){
-          system_threads[current_thread_id]->flags = THREAD_RUNNING; 
-          break; 
-        }
+    if(system_threads[current_thread_id].flags == THREAD_SLEEPING){
+      // If a thread is ready to be awoken, we get to it!
+      if(system_threads[current_thread_id].next_run_ms <= millis()){
+        system_threads[current_thread_id].flags = THREAD_RUNNING; 
+        break; 
       }
     }
-  }
+}
 
-  current_tick_count = system_threads[current_thread_id]->ticks;
-  current_thread = system_threads[current_thread_id];
-  current_save = &system_threads[current_thread_id]->save;
+  current_tick_count = system_threads[current_thread_id].ticks;
+  current_thread = &system_threads[current_thread_id];
+  current_save = &system_threads[current_thread_id].save;
   current_msp = (current_thread_id==0?1:0);
-  current_sp = system_threads[current_thread_id]->sp;
+  current_sp = system_threads[current_thread_id].sp;
 }
 
 /*!
@@ -482,7 +479,7 @@ void os_del_process(void){
   int old_state = os_stop();
 
   // Pointer to the thread we are using.
-  thread_t *me = system_threads[current_thread_id];
+  thread_t *me = &system_threads[current_thread_id];
 
   thread_count--;
 
@@ -539,12 +536,8 @@ os_thread_id_t os_add_thread(thread_func_t p, void * arg, uint8_t thread_priorit
   
   for (int i=1; i < MAX_THREADS; i++) {
     
-    // If there is no thread(aka NULL pointer), then we will it up with a new unintialized spot
-    if (system_threads[i] == NULL) 
-      system_threads[i] = new thread_t();
-
-    if (system_threads[i]->flags == THREAD_ENDED || system_threads[i]->flags == THREAD_EMPTY) { // free thread
-      thread_t *tp = system_threads[i]; // working on this thread
+    if (system_threads[i].flags == THREAD_ENDED || system_threads[i].flags == THREAD_EMPTY) { // free thread
+      thread_t *tp = &system_threads[i]; // working on this thread
       
       // If there was a previously allocated stack and it was allocated by the previous innstance 
       if (tp->stack && tp->my_stack) 
@@ -615,7 +608,7 @@ bool os_set_microsecond_timer(int tick_microseconds){
 */
 os_thread_id_t os_suspend_thread(os_thread_id_t target_thread_id){
   if(target_thread_id < thread_count){
-    system_threads[target_thread_id]->flags = THREAD_SUSPENDED;   
+    system_threads[target_thread_id].flags = THREAD_SUSPENDED;   
     return target_thread_id;
   }
   // Otherwise tell system that thread doesn't exist. 
@@ -630,7 +623,7 @@ os_thread_id_t os_suspend_thread(os_thread_id_t target_thread_id){
 */
 os_thread_id_t os_resume_thread(os_thread_id_t target_thread_id){
   if(target_thread_id < thread_count){
-    system_threads[target_thread_id]->flags = THREAD_RUNNING;   
+    system_threads[target_thread_id].flags = THREAD_RUNNING;   
     return target_thread_id; 
   }
   // Otherwise tell system that thread doesn't exist. 
@@ -648,7 +641,7 @@ os_thread_id_t os_resume_thread(os_thread_id_t target_thread_id){
 */
 os_thread_id_t os_kill_thread(os_thread_id_t target_thread_id){
   if(target_thread_id < thread_count)
-    system_threads[target_thread_id]->flags = THREAD_ENDED;   
+    system_threads[target_thread_id].flags = THREAD_ENDED;   
   // Otherwise tell system that thread doesn't exist. 
   return THREAD_DNE;  
 }
@@ -661,7 +654,7 @@ os_thread_id_t os_kill_thread(os_thread_id_t target_thread_id){
 */
 thread_state_t os_get_thread_state(os_thread_id_t target_thread_id){
   if(target_thread_id < thread_count)
-    return system_threads[target_thread_id]->flags;
+    return system_threads[target_thread_id].flags;
   return THREAD_DNE;
 }
 
@@ -677,7 +670,7 @@ os_thread_id_t os_current_id(void){
 */
 int os_get_stack_used(os_thread_id_t target_thread_id){
   if(target_thread_id < thread_count)
-    return system_threads[target_thread_id]->stack + system_threads[target_thread_id]->stack_size - (uint8_t*)system_threads[target_thread_id]->sp;
+    return system_threads[target_thread_id].stack + system_threads[target_thread_id].stack_size - (uint8_t*)system_threads[target_thread_id].sp;
   return -1; 
 }
 
@@ -687,7 +680,7 @@ int os_get_stack_used(os_thread_id_t target_thread_id){
 * @param thread_signal_t thread_signal(there are 32 thread signals per thread)
 */
 void os_thread_signal(thread_signal_t thread_signal){
-  system_threads[current_thread_id]->thread_set_flags |= (1 << (uint32_t)thread_signal); 
+  system_threads[current_thread_id].thread_set_flags |= (1 << (uint32_t)thread_signal); 
 }
 
 /*!
@@ -696,7 +689,7 @@ void os_thread_signal(thread_signal_t thread_signal){
 * @param thread_signal_t thread_signal(there are 32 thread signals per thread)
 */
 void os_thread_clear(thread_signal_t thread_signal){
-  system_threads[current_thread_id]->thread_set_flags &= ~(1 << (uint32_t)thread_signal);
+  system_threads[current_thread_id].thread_set_flags &= ~(1 << (uint32_t)thread_signal);
 }
 
 /*!
@@ -707,7 +700,7 @@ void os_thread_clear(thread_signal_t thread_signal){
 */
 bool os_signal_thread(thread_signal_t thread_signal, os_thread_id_t target_thread_id){
   if(target_thread_id < thread_count){
-    system_threads[target_thread_id]->thread_set_flags |= (1 << (uint32_t)thread_signal); 
+    system_threads[target_thread_id].thread_set_flags |= (1 << (uint32_t)thread_signal); 
     return true; 
   }
 
@@ -723,7 +716,7 @@ bool os_signal_thread(thread_signal_t thread_signal, os_thread_id_t target_threa
 */
 bool os_signal_thread_clear(thread_signal_t thread_signal, os_thread_id_t target_thread_id){
   if(target_thread_id < thread_count){
-    system_threads[target_thread_id]->thread_set_flags &= ~(1 << (uint32_t)thread_signal);
+    system_threads[target_thread_id].thread_set_flags &= ~(1 << (uint32_t)thread_signal);
     return true; 
   }
   return false; 
@@ -737,7 +730,7 @@ bool os_signal_thread_clear(thread_signal_t thread_signal, os_thread_id_t target
 */  
 thread_signal_status_t os_checkbits_thread(thread_signal_t thread_signal, os_thread_id_t target_thread_id){
   if(target_thread_id < thread_count){
-    if(OS_CHECK_BIT(system_threads[target_thread_id]->thread_set_flags, (uint32_t)thread_signal))
+    if(OS_CHECK_BIT(system_threads[target_thread_id].thread_set_flags, (uint32_t)thread_signal))
       return THREAD_SIGNAL_SET; 
     return THREAD_SIGNAL_CLEAR; 
   }
@@ -750,7 +743,7 @@ thread_signal_status_t os_checkbits_thread(thread_signal_t thread_signal, os_thr
 * @return if those bits are set or not
 */  
 thread_signal_status_t os_thread_checkbits(thread_signal_t thread_signal){
-  if(OS_CHECK_BIT(system_threads[current_thread_id]->thread_set_flags, (uint32_t)thread_signal))
+  if(OS_CHECK_BIT(system_threads[current_thread_id].thread_set_flags, (uint32_t)thread_signal))
       return THREAD_SIGNAL_SET; 
     return THREAD_SIGNAL_CLEAR; 
 }
