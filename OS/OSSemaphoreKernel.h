@@ -2,7 +2,7 @@
 #define _OSSEMAPHOREKERNEL_H
 
 // So we can configure modules
-#include "../../enabled_modules.h"
+#include "../enabled_modules.h"
 
 #ifdef SEMAPHORE_MODULE
 

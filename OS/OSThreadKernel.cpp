@@ -335,8 +335,9 @@ extern void os_thread_delay_ms(int millisecond){
   // Tells program to start sleeping. 
   current_thread->flags = THREAD_SLEEPING; 
 
-  // Yields to operating system call
-  _os_yield(); 
+  while(current_thread->next_run_ms <= millis())
+    // Yields to operating system call
+    _os_yield(); 
 }
 
 /*!
