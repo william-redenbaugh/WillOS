@@ -69,7 +69,7 @@ enum thread_state_t{
 *   @note Unless we transition to a linked list(which is unlikely), this will remain the max limit
 */
 #ifndef OS_EXTERN_MAX_THREADS
-static const int MAX_THREADS = 128;
+static const int MAX_THREADS = 48;
 #else
 static const int MAX_THREADS = OS_EXTERN_MAX_THREADS; 
 #endif 

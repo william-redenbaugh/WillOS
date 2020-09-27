@@ -39,8 +39,9 @@ void* PointerQueue::deque(void){
     // Then increment the head. 
     this->head = new_head; 
 
+    // If the head is null, we want to ensure that the tail becomes null as well(since it's memory is freed. )
     if(this->head == NULL)
-        this-> tail = NULL;
+        this->tail = NULL;
 
     return ptr; 
 }
