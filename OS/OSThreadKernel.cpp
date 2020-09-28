@@ -333,11 +333,13 @@ extern void os_thread_delay_ms(int millisecond){
   // So the operating system knows when to start back up the next thread. 
   current_thread->next_run_ms = start_del + millisecond; 
   // Tells program to start sleeping. 
-  current_thread->flags = THREAD_SLEEPING; 
+  //current_thread->flags = THREAD_SLEEPING; 
 
-  while(current_thread->next_run_ms <= millis())
+  while(current_thread->next_run_ms > millis()){
     // Yields to operating system call
     _os_yield(); 
+
+  }
 }
 
 /*!
@@ -449,9 +451,7 @@ inline void os_get_next_thread() {
       break;
     }
 
-    if(system_threads[current_thread_id].flags == THREAD_RUNNING)
-      break; 
-
+    /*
     if(system_threads[current_thread_id].flags == THREAD_SLEEPING){
       // If a thread is ready to be awoken, we get to it!
       if(system_threads[current_thread_id].next_run_ms <= millis()){
@@ -459,6 +459,10 @@ inline void os_get_next_thread() {
         break; 
       }
     }
+    */
+
+    if(system_threads[current_thread_id].flags == THREAD_RUNNING)
+      break; 
 }
 
   current_tick_count = system_threads[current_thread_id].ticks;

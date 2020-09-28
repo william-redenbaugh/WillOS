@@ -2,6 +2,11 @@
 #define _ENABLED_MODULES_H
 
 /*!
+*   @brief Fast Malloc module for allocated HEAP data onto RAMBANK1 on Teensy4
+*/
+#define FAST_MALLOC_MODULE
+
+/*!
 *   @brief Low priority work thread module
 */
 #define LPWORK_MODULE
