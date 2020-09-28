@@ -10,7 +10,7 @@
 
 class OSSignal{
     public: 
-    
+
     /*!
     *   @brief Signals a bit
     *   @param thread_signal_t which signal we are setting

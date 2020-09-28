@@ -3,8 +3,9 @@
 
 /*!
 *   @brief Fast Malloc module for allocated HEAP data onto RAMBANK1 on Teensy4
+*   @note This is threadsafe module, non-thread-safe module is always availabe since it's used in scheduler
 */
-#define FAST_MALLOC_MODULE
+// #define OS_FAST_MALLOC_MODULE
 
 /*!
 *   @brief Low priority work thread module

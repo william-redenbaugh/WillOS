@@ -1,9 +1,6 @@
 #ifndef _FAST_MALLOC_HPP
 #define _FAST_MALLOC_HPP
 
-#include "../enabled_modules.h"
-#ifdef FAST_MALLOC_MODULE
-
 #include <Arduino.h> 
 #include "OS/OSThreadKernel.h"
 
@@ -30,5 +27,4 @@ void* fast_malloc(size_t size);
 */
 void fast_malloc_free(void *ptr); 
 
-#endif
 #endif

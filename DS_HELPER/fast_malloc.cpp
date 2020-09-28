@@ -5,8 +5,6 @@
 *   @note Implamentation derived from this example
 */
 
-#ifdef FAST_MALLOC_MODULE
-
 /*!
 *   @brief Data Structure that helps memory free memory block spaces. 
 */
@@ -132,5 +130,3 @@ void fast_malloc_merge(void){
     }
     return; 
 }
-
-#endif

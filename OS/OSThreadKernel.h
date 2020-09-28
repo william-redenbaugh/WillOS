@@ -39,6 +39,9 @@ Last Edit Date: 8/9/2020
 #include <Arduino.h>
 #include <stdint.h>
 
+// So we can malloc stuff on our faster memory
+#include "DS_HELPER/fast_malloc.hpp"
+
 /*!
 * @brief Enumerated State of different operating system states. 
 * @note Used for dealing with different threading purposes. 
