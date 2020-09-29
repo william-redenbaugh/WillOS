@@ -1,4 +1,5 @@
 #include "queue.h"
+#include "fast_malloc.hpp"
 
 /*!
 *   @brief Adding something to our queue
@@ -7,13 +8,15 @@
 void PointerQueue::enque(void *ptr){
     // The assumption is that if the tail is null, so is the head
     if(this->tail == NULL){
-        this->tail = new QueueLinkedList(); 
+        this->tail = (QueueLinkedList*)fast_malloc(sizeof(QueueLinkedList())); 
         // Add everything
         this->head = this->tail; 
         this->tail->ptr = ptr; 
     } 
     else{
-        QueueLinkedList *new_tail = new QueueLinkedList(); 
+        // QueueLinkedList *new_tail = new QueueLinkedList(); 
+        QueueLinkedList *new_tail = (QueueLinkedList*)fast_malloc(sizeof(QueueLinkedList())); 
+        
         new_tail->ptr = ptr;
         // Since we are
         this->tail->next = new_tail;
@@ -34,7 +37,7 @@ void* PointerQueue::deque(void){
     QueueLinkedList *new_head = this->head->next; 
 
     // Make sure that memory is given back
-    free(this->head); 
+    fast_malloc_free(this->head); 
 
     // Then increment the head. 
     this->head = new_head; 

@@ -1,5 +1,7 @@
 #include "OSSerial.h"
 
+#ifdef SERIAL_MODULE
+
 /*!
 *   @brief Mutex that we use to ensure that the USB resource is only being used by one device at a time 
 */
@@ -44,3 +46,5 @@ void os_usb_serial_read(void *buffer, uint32_t size){
 uint32_t os_usb_serial_bytes_available(void){
     return (uint32_t)usb_serial_available();
 }
+
+#endif

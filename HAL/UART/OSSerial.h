@@ -1,10 +1,13 @@
 #ifndef _OSSERIAL_H
 #define _OSSERIAL_H
 
+#include "../../enabled_modules.h"
+#ifdef SERIAL_MODULE
+
 #include <Arduino.h> 
-#include "../OS/OSMutexKernel.h"
-#include "../OS/OSSignalKernel.h" 
-#include "../OS/OSThreadKernel.h" 
+#include "OS/OSMutexKernel.h"
+#include "OS/OSSignalKernel.h" 
+#include "OS/OSThreadKernel.h" 
 
 /*
 *   @brief USB controls through the TeensyOS, initialization
@@ -32,4 +35,5 @@ void os_usb_serial_read(void *buffer, uint32_t size);
 */
 uint32_t os_usb_serial_bytes_available(void); 
 
+#endif
 #endif 

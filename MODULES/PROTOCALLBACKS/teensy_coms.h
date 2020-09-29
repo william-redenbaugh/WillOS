@@ -14,9 +14,6 @@
 #include "OS/OSMutexKernel.h"
 #include "OS/OSSignalKernel.h"
 
-// Include our RTOS device drivers. 
-#include "HAL/OSSerial.h"
-
 // Include our protobuffer messages
 #include "messagedata.pb.h"
 #include "nanopb/pb_decode.h"
