@@ -49,4 +49,9 @@
 */
 #define VOLTAGE_READ_MODULE
 
+/*!
+*   @brief Threadsafe UART Module
+*/
+// #define SERIAL_MODULE 
+
 #endif 

@@ -331,15 +331,12 @@ extern void os_thread_delay_ms(int millisecond){
   int start_del = millis();
 
   // So the operating system knows when to start back up the next thread. 
-  current_thread->next_run_ms = start_del + millisecond; 
-  // Tells program to start sleeping. 
-  current_thread->flags = THREAD_SLEEPING; 
+  current_thread->next_run_ms = start_del + millisecond;  
 
-  //while(current_thread->next_run_ms > millis()){
+  while(current_thread->next_run_ms > millis()){
     // Yields to operating system call
-   _os_yield(); 
-
-  //}
+   _os_yield();
+  }
 }
 
 /*!
@@ -451,15 +448,6 @@ inline void os_get_next_thread() {
       current_thread_id = 0; // thread 0 is MSP; always active so return
       //break;
     }
-
-    if(system_threads[current_thread_id].flags == THREAD_SLEEPING){
-      // If a thread is ready to be awoken, we get to it!
-      if(system_threads[current_thread_id].next_run_ms <= millis()){
-        system_threads[current_thread_id].flags = THREAD_RUNNING; 
-        break; 
-      }
-    }
-
     if(system_threads[current_thread_id].flags == THREAD_RUNNING)
       break; 
 }
