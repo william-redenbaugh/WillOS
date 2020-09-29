@@ -5,6 +5,9 @@
 *   @note Implamentation derived from this example
 */
 
+/*!
+*   @brief Enumeated status of our memory blcoks
+*/  
 typedef enum memory_block_status_t{
     MEMORY_BLOCK_TAKEN = 0, 
     MEMORY_BLOCK_FREE = 1
@@ -14,7 +17,10 @@ typedef enum memory_block_status_t{
 *   @brief Data Structure that helps memory free memory block spaces. 
 */
 struct mem_block{
+    // How much space does this memory block take up?
     size_t size; 
+
+
     uint8_t free; 
     struct mem_block *next; 
 };
@@ -32,16 +38,17 @@ struct mem_block *free_list = (void*)fast_malloc_array;
 /*!
 *   @brief Function declaration
 */
-void fast_malloc_init(void); 
+static void fast_malloc_init(void); 
 static void fast_malloc_split(struct mem_block *fitting_slot, size_t size); 
 void* fast_malloc(size_t size); 
 void fast_malloc_free(void *ptr); 
 void fast_malloc_merge(void); 
+size_t fast_malloc_memblock_size(void *ptr); 
 
 /*!
 *   @brief Set's up the malloc
 */
-void fast_malloc_init(void){
+static void fast_malloc_init(void){
     free_list->size = FAST_MALLOC_SIZE_BYTES - sizeof(struct mem_block); 
     free_list->free = MEMORY_BLOCK_FREE; 
     free_list->next = NULL; 
@@ -109,7 +116,21 @@ void* fast_malloc(size_t size){
     else if(current->size > size){
 
         // We split the memory block
-        fast_malloc_split(current, size);
+        //fast_malloc_split(current, size);
+
+        // Generating a remainder block and configuring it 
+        struct mem_block* remainder_block = current + size + sizeof(struct mem_block); 
+        // Since we have a new memory block, with a shrunken size. 
+        remainder_block->size = (current->size - size - sizeof(struct mem_block)); 
+        remainder_block->free = MEMORY_BLOCK_FREE; 
+        remainder_block->next = NULL; 
+
+
+        // Configuring our newly used block
+        current->next = remainder_block; 
+        // Need to know the size of the array
+        current->size = size; 
+        current->free = MEMORY_BLOCK_TAKEN; 
 
         // Our result is just whatever happens after current;  
         result = (void*)(++current); 
@@ -165,4 +186,27 @@ void fast_malloc_merge(void){
         current = current->next; 
     }
     return; 
+}
+
+/*!
+*   @brief 
+*   @param void *ptr(memory block start location
+*   @return size_t size of memory block. 
+*   @note it's very possible to break this function, so really make sure that the block you are checking is 
+*   @note a "fast malloced block
+"
+*/
+size_t fast_malloc_memblock_size(void *ptr){
+    if(((void*)fast_malloc_array <= ptr) && (ptr <= (void*)fast_malloc_array + FAST_MALLOC_SIZE_BYTES)){
+        // Cast as a memory block
+        struct mem_block *current = (struct mem_block*)ptr; 
+
+        // Since we want to get the memory block pointer, we need to check the memory. 
+        current--;
+
+        // Getting the size of the memory block
+        return current->size; 
+    }
+    
+    return 0;  
 }

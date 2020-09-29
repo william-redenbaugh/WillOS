@@ -47,6 +47,13 @@ class PointerQueue{
         *   @note O(N) time complexity based off length of queue. Use wisely
         */
         bool check_exists(void *ptr); 
+
+        /*!
+        *   @returns the lenth of the queue
+        */
+        uint16_t get_size(void){
+            return this->size; 
+        } 
         
     private:
 
@@ -59,6 +66,11 @@ class PointerQueue{
         *   @brief Tail of our linked list, Helps us add things to the end of the LinkedList
         */
         QueueLinkedList *tail = nullptr; 
+
+        /*!
+        *   @brief Current number of elements in the queue
+        */
+        uint16_t size = 0; 
 }; 
 
 #endif 
