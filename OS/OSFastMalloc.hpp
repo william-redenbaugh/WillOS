@@ -37,5 +37,15 @@ void *os_fast_malloc_free(void *ptr){
     fast_malloc_mutex.unlock(); 
 }
 
+/*!
+*   @return size of the referenced block
+*/
+uint16_t os_fast_malloc_block_size(void *ptr){
+    fast_malloc_mutex.lockWaitIndefinite(); 
+    register uint16_t ret = fast_malloc_memblock_size(ptr); 
+    fast_malloc_mutex.unlock(); 
+
+    return ret; 
+}
 #endif
 #endif 

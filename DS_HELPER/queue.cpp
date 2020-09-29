@@ -6,10 +6,11 @@
 *   @param void *ptr (general purpose pointer.)
 */
 void PointerQueue::enque(void *ptr){
-    
+    QueueLinkedList *new_tail;
+
     // The assumption is that if the tail is null, so is the head
     if(this->tail == NULL){
-        QueueLinkedList *new_tail = (QueueLinkedList*)fast_malloc(sizeof(QueueLinkedList)); 
+        new_tail = (QueueLinkedList*)fast_malloc(sizeof(QueueLinkedList)); 
         this->tail = new_tail; 
         // Add everything
         this->head = this->tail; 
@@ -17,7 +18,7 @@ void PointerQueue::enque(void *ptr){
     } 
     
     else{
-        QueueLinkedList *new_tail = (QueueLinkedList*)fast_malloc(sizeof(QueueLinkedList)); 
+        new_tail = (QueueLinkedList*)fast_malloc(sizeof(QueueLinkedList)); 
         // QueueLinkedList *new_tail =  
         new_tail->next = NULL; 
         new_tail->ptr = ptr;
@@ -26,7 +27,9 @@ void PointerQueue::enque(void *ptr){
         // Then since this is our new tail, we need to add it 
         this->tail = this->tail->next; 
     }
-    
+
+    // We increase the size by one 
+    this->size++; 
 }
 
 /*!
@@ -51,7 +54,9 @@ void* PointerQueue::deque(void){
     // If the head is null, we want to ensure that the tail becomes null as well(since it's memory is freed. )
     if(this->head == NULL)
         this->tail = NULL;
-
+    
+    // The size of the queue is smaller s
+    this->size--;
     return ptr; 
 }
 
