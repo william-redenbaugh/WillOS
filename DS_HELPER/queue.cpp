@@ -6,22 +6,27 @@
 *   @param void *ptr (general purpose pointer.)
 */
 void PointerQueue::enque(void *ptr){
+    
     // The assumption is that if the tail is null, so is the head
     if(this->tail == NULL){
-        this->tail = (QueueLinkedList*)fast_malloc(sizeof(QueueLinkedList())); 
+        QueueLinkedList *new_tail = (QueueLinkedList*)fast_malloc(sizeof(QueueLinkedList)); 
+        this->tail = new_tail; 
         // Add everything
         this->head = this->tail; 
         this->tail->ptr = ptr; 
     } 
+    
     else{
-        // QueueLinkedList *new_tail = new QueueLinkedList(); 
-        QueueLinkedList *new_tail = (QueueLinkedList*)fast_malloc(sizeof(QueueLinkedList())); 
-        
+        QueueLinkedList *new_tail = (QueueLinkedList*)fast_malloc(sizeof(QueueLinkedList)); 
+        // QueueLinkedList *new_tail =  
+        new_tail->next = NULL; 
         new_tail->ptr = ptr;
-        // Since we are
+        // Connecting the tail to the head 
         this->tail->next = new_tail;
+        // Then since this is our new tail, we need to add it 
         this->tail = this->tail->next; 
     }
+    
 }
 
 /*!
@@ -34,9 +39,10 @@ void* PointerQueue::deque(void){
     // Get the current pointer of the queue
     void *ptr = this->head->ptr; 
 
+    // We want to access the next data member
     QueueLinkedList *new_head = this->head->next; 
 
-    // Make sure that memory is given back
+    // Make sure that memory is given back to the system 
     fast_malloc_free(this->head); 
 
     // Then increment the head. 
