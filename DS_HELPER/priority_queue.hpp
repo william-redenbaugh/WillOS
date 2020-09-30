@@ -82,6 +82,11 @@ struct PriorityQueueHeapNode{
 };
 
 
+/*!
+*   @brief Heap implementation of a priority queue to allow us to have quick n easy access to our priority queueu
+*   @note Ensure that whatever thread calls this has a large enough stack size to handle traversing through the 
+*   @note The array recursively(otherwise use the naive approach if we run low on memory, but isn't not
+*/
 class PriorityQueuePointerHeap{
 public:
 
@@ -115,7 +120,12 @@ public:
     *   @brief Looks at highest priority data, and returns the top of the node 
     *   @returns PriorityQueueNaiveNode* top level node. Or null of no node exists.  
     */
-    PriorityQueueHeapNode *peek_top_node(void); 
+    PriorityQueueHeapNode *peek_top_node(void){
+        if(this->total_nodes == 0)
+            return NULL; 
+
+        return this->node_list; 
+    }
 
     /*!
     *   @brief Checks to see if a particular pointer address can be found in the priority queue

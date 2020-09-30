@@ -152,14 +152,41 @@ void* PriorityQueuePointerHeap::pop(void){
 
     this->total_nodes--; 
     this->node_list[0] = this->node_list[this->total_nodes]; 
+
+    // Resort heap. 
+    this->max_heapify(0); 
+
+    // Return new pointer to data. 
+    return ptr; 
 }
 
 /*!
 *   @brief Moves element into the proper space in the array
 *   @brief int (location of element in array)
 */
-void max_heapify(int n){
-    
+void PriorityQueuePointerHeap::max_heapify(int n){
+    // Finding left and right child nodes
+    int left = this->left_child(n); 
+    int right = this->right_child(n); 
+
+    // Finding the largest among three nodes. 
+    int largest = n;
+
+    // Check if left or right nodes are larger than the current node. 
+    if(left <= this->total_nodes && this->node_list[left].priority > this->node_list[largest].priority)
+        largest = left; 
+    if(right <= this->total_nodes && this->node_list[right].priority > this->node_list[largest].priority)
+        largest = right; 
+
+    // Swap the largest with the current node, and repeat process(recursively)
+    if(largest != n){
+        // Swaping data. 
+        struct PriorityQueueHeapNode temp = this->node_list[n]; 
+        this->node_list[n] = this->node_list[largest]; 
+        this->node_list[largest] = temp; 
+        max_heapify(largest); 
+    }
+
 }
 
 #endif 
