@@ -1,11 +1,9 @@
 #ifndef _PRIORITY_QUEUE_HPP
 #define _PRIORITY_QUEUE_HPP
 
-#include <Arduino.h> 
-
 #include "../enabled_modules.h"
-
-#ifdef PRIORITY_QUEUE_NAIVE
+#include <Arduino.h> 
+#include "fast_malloc.hpp"
 
 struct PriorityQueueNaiveNode{
     /*!
@@ -66,7 +64,7 @@ private:
     struct PriorityQueueNaiveNode *head = NULL;    
 };
 
-#endif 
+
 
 #ifdef PRIORITY_QUEUE_HEAP
 
@@ -81,7 +79,6 @@ struct PriorityQueueHeapNode{
     uint16_t priority; 
 };
 
-
 /*!
 *   @brief Heap implementation of a priority queue to allow us to have quick n easy access to our priority queueu
 *   @note Ensure that whatever thread calls this has a large enough stack size to handle traversing through the 
@@ -94,6 +91,13 @@ public:
     *   @brief We need to setup the priority queue. 
     */
     void init_priority_queue(uint16_t priority_queue_size); 
+
+    /*!
+    *   @brief Deconstructor for priority queue
+    */
+    void deinit(void){
+        fast_malloc_free(this->node_list);
+    }
 
     /*!
     *   @brief Inserts an element with a defined priority into the priority queue/heap

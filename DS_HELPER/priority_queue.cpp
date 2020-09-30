@@ -1,6 +1,5 @@
 #include "priority_queue.hpp"
 
-#ifdef PRIORITY_QUEUE_NAIVE
 /*!
 *   @brief Inserts an element with a defined priority into the priority queue/heap
 *   @param void *ptr address pointer to whatever you want
@@ -8,7 +7,7 @@
 */
 void PriorityQueuePointerNaive::insert(void *ptr, uint16_t priority){
     // Allocating new node on the heap.
-    PriorityQueueNaiveNode *new_node = new PriorityQueueNaiveNode; 
+    PriorityQueueNaiveNode *new_node = (PriorityQueueNaiveNode*)fast_malloc(sizeof(PriorityQueueNaiveNode)); 
     
     // What's the priority of the data. 
     new_node->priority = priority; 
@@ -59,7 +58,7 @@ void* PriorityQueuePointerNaive::pop(void){
     PriorityQueueNaiveNode *next_node = this->head->next; 
     
     // Free up in memory. 
-    free(this->head); 
+    fast_malloc_free(this->head); 
     this->head = next_node; 
     return ptr; 
 } 
@@ -113,7 +112,7 @@ void PriorityQueuePointerHeap::init_priority_queue(uint16_t priority_queue_size)
     // Saving max node count
     this->max_node_size = priority_queue_size; 
     // Allocating space of array and setting starting pointer 
-    this->node_list = (PriorityQueueHeapNode*) malloc(sizeof(PriorityQueueHeapNode) * priority_queue_size);
+    this->node_list = (PriorityQueueHeapNode*) fast_malloc(sizeof(PriorityQueueHeapNode) * priority_queue_size);
 }
 
 /*!
@@ -186,7 +185,4 @@ void PriorityQueuePointerHeap::max_heapify(int n){
         this->node_list[largest] = temp; 
         max_heapify(largest); 
     }
-
 }
-
-#endif 

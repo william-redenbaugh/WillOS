@@ -55,16 +55,17 @@
 // #define SERIAL_MODULE 
 
 /*!
-*   @brief Priority Queue (Naive Approach) module
-*   @note Very slow theoretical implamentation, but is decently quick with smaller lists. 
-*/
-#define PRIORITY_QUEUE_NAIVE
-
-/*!
 *   @brief Priority Queue(Heap approach) module
-*   @note Decently fast(O(log(n)) implementation speed), but does take up more space than the Naive approach
+*   @note Decently fast(O(log(n)) implementation speed), but sifting through array could take more cpu cycles than 
+*   @note naive approach. Use this if you are popping off AND pushing data often. Otherwise if you are just adding a bunch of data
+*   @note And reading through it, it's recomended to just use the naive approach if you are gonna add a bunch of elements to a list
+*   @note and read through them often
 */
 #define PRIORITY_QUEUE_HEAP
 
+/*!
+*   @brief Red Black tree node self balancing tree module
+*/
+#define RED_BLACK_TREE_MODULE
 
 #endif 
