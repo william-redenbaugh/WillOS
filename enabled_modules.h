@@ -54,4 +54,17 @@
 */
 // #define SERIAL_MODULE 
 
+/*!
+*   @brief Priority Queue (Naive Approach) module
+*   @note Very slow theoretical implamentation, but is decently quick with smaller lists. 
+*/
+#define PRIORITY_QUEUE_NAIVE
+
+/*!
+*   @brief Priority Queue(Heap approach) module
+*   @note Decently fast(O(log(n)) implementation speed), but does take up more space than the Naive approach
+*/
+#define PRIORITY_QUEUE_HEAP
+
+
 #endif 
