@@ -68,4 +68,15 @@
 */
 #define RED_BLACK_TREE_MODULE
 
+/*!
+*   @brief Circular string buffer module. 
+*   @note allows us to save a bunch of strings into a circular buffer for debugging purposes. 
+*/
+#define CIRCULAR_BUFFER_STRING_MODULE 
+
+/*!
+*   @brief Circular Buffer Queue Module 
+*/
+#define CIRCULAR_BUFFER_POINTER_MODULE 
+
 #endif 
