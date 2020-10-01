@@ -101,7 +101,6 @@ PriorityQueueNaiveNode* PriorityQueuePointerNaive::peek_top_node(void){
     return this->head; 
 }
 
-#endif 
 
 #ifdef PRIORITY_QUEUE_HEAP
 
@@ -186,3 +185,5 @@ void PriorityQueuePointerHeap::max_heapify(int n){
         max_heapify(largest); 
     }
 }
+
+#endif 
