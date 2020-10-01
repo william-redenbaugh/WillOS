@@ -8,6 +8,14 @@
 #include <Arduino.h> 
 #include "DS_HELPER/fast_malloc.hpp"
 
+/*!
+*   @brief Helper structure that lets you return character pointer and string length. 
+*/
+struct RetCircularBufferString{
+    char *arr; 
+    uint32_t len; 
+}; 
+
 class CircularBufferString{
 public: 
 
@@ -41,6 +49,13 @@ public:
     bool insert(char *arr, size_t len);
 
     /*!
+    *   @brief Get_string contents
+    *   @returns RetCircularBufferString struct with char array pointer and string length 
+    */
+    RetCircularBufferString get_entire_buffer(void); 
+
+
+    /*!
     *   @brief Deconstructs array
     */
     void deinit(void); 
@@ -69,6 +84,14 @@ private:
 #endif 
 
 #ifdef CIRCULAR_BUFFER_POINTER_MODULE
+
+/*!
+*   @brief Returns struct with Circular Buffer pointer data. 
+*/
+struct RetCircularBufferPointer{
+    void** ptr; 
+    uint32_t len; 
+};
 
 class CircularBufferPointer{
 public: 
@@ -103,6 +126,11 @@ public:
     bool insert(void *ptr);
 
     /*!
+    *   @return Struct that holds enough info to get entire buffer(void **ptr array and uint32_t len of ringbuffer array)
+    */  
+    RetCircularBufferPointer get_entire_buffer(void); 
+
+    /*!
     *   @brief Deconstructs array
     */
     void deinit(void); 
@@ -112,8 +140,8 @@ private:
     /*!
     *   @brief General purpose pointer array to pointers. Ringbuffer array and length
     */
-    void **ptr; 
-    uint32_t buffer_len; 
+    void **buffer; 
+    uint32_t buffer_length; 
 
     /*!
     *   @brief Current position of the ring buffer 
