@@ -60,3 +60,25 @@ RedBlackTreePointerNode* RedBlackTreePointerModule::min(void){
 
     return current; 
 }
+
+/*!
+*   @brief Inserts a node into the tree with a given reference number and value
+*   @param uint32_t reference number
+*   @param void* general purpose pointer. 
+*/  
+void RedBlackTreePointerModule::insert(void *ptr, uint32_t reference_number){
+    
+    // Allocate new node. 
+    RedBlackTreePointerNode *new_node = new RedBlackTreePointerNode; 
+    new_node->ptr = ptr; 
+    new_node->reference_number = reference_number; 
+
+    if(this->head == NULL){
+        // Set new node to red
+        new_node->red_black = false;
+        return; 
+    }
+
+    new_node->red_black = true; 
+    
+}

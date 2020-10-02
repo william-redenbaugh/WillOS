@@ -74,6 +74,11 @@
 #define RED_BLACK_TREE_MODULE
 
 /*!
+*   @brief AVL self balancing tree module
+*/
+// #define AVL_TREE_MODULE
+
+/*!
 *   @brief Circular string buffer module. 
 *   @note allows us to save a bunch of strings into a circular buffer for debugging purposes. 
 */

@@ -30,8 +30,8 @@ struct RedBlackTreePointerNode{
     /*!
     *   @brief Left and right pointer nodes for the tree. 
     */
-    struct RedBlackTreePointerNode *left;   
-    struct RedBlackTreePointerNode *right; 
+    struct RedBlackTreePointerNode *left = NULL;   
+    struct RedBlackTreePointerNode *right = NULL; 
 };
 
 /*!
