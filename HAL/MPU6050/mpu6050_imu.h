@@ -79,12 +79,18 @@ typedef struct{
     float a_z; 
 }accel_data_ms2; 
 
+/*!
+*   @brief Converstion struct for dealing with gyroscopic data. 
+*/
 typedef struct{
     float g_x; 
     float g_y; 
     float g_z; 
 }gyro_data_d_s; 
 
+/*!
+*   @brief Function declarations
+*/
 mpu_init_status_t init_mpu6050(uint8_t i2c_address, mpu_accelerometer_range_t a_range, mpu_gyro_range_t g_range); 
 imu_data_raw get_latest_mpu6050_data(bool blocking); 
 imu_data_raw get_latest_mpu6050_data_sampled(uint16_t samples); 
