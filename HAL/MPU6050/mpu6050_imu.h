@@ -1,6 +1,10 @@
 #ifndef MPU6050_IMU_H
 #define MPU6050_IMU_H
 
+#include "enabled_modules.h"
+
+#ifdef MPU6050_MODULE
+
 #include <Arduino.h> 
 #include <Wire.h>
 
@@ -88,4 +92,5 @@ accel_data_g translate_accel_raw_g(imu_data_raw raw_dat);
 accel_data_ms2 translate_accel_g_ms2(accel_data_g dat_g); 
 gyro_data_d_s translate_gyro_raw_d_s(imu_data_raw raw_dat); 
 
+#endif 
 #endif 

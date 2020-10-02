@@ -1,5 +1,7 @@
 #include "mpu6050_imu.h"
 
+#ifdef MPU6050_MODULE
+
 /*
 *   PURPOSE: 
 *   This is *another* mpu6050 library, mainly because all of the more simple libraries are gpl 
@@ -449,3 +451,5 @@ gyro_data_d_s translate_gyro_raw_d_s(imu_data_raw raw_dat){
     }
     return dat; 
 }
+
+#endif 
