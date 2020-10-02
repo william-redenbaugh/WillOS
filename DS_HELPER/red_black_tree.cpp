@@ -36,3 +36,27 @@ static RedBlackTreePointerNode *search_helper(RedBlackTreePointerNode *node, uin
 RedBlackTreePointerNode* RedBlackTreePointerModule::search(uint32_t reference_number){
     return search_helper(this->head, reference_number);
 }
+
+/*!
+*   @returns Find the largest known value in the tree. 
+*/
+RedBlackTreePointerNode* RedBlackTreePointerModule::max(void){
+    RedBlackTreePointerNode *current = this->head; 
+    // Siphs through the rightmost nodes until we have reached the rightmostnode. 
+    while(current != NULL)
+        current = current->right; 
+
+    return current; 
+}
+
+/*!
+*   @returns Find the smallest known value in the tree. 
+*/
+RedBlackTreePointerNode* RedBlackTreePointerModule::min(void){
+    RedBlackTreePointerNode *current = this->head; 
+    // Siphs through the leftmost nodes until we have reached the rightmostnode. 
+    while(current != NULL)
+        current = current->left; 
+
+    return current; 
+}
