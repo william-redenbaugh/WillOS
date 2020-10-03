@@ -10,12 +10,12 @@
 /*!
 *   @brief Low priority work thread module
 */
-#define LPWORK_MODULE
+// #define LPWORK_MODULE
 
 /*!
 *   @brief Protobuffer Callbacks Handler module
 */
-#define PROTOCALLBACKS_MODULE
+// #define PROTOCALLBACKS_MODULE
 
 /*!
 *   @brief Operating System Semaphore Module
@@ -47,12 +47,12 @@
 /*!
 *   @brief IMU module for dealing with mpu6050 stuff
 */
-#define MPU6050_MODULE
+// #define MPU6050_MODULE
 
 /*!
 *   @brief Easy module that allows us to read voltages 
 */
-#define VOLTAGE_READ_MODULE
+// #define VOLTAGE_READ_MODULE
 
 /*!
 *   @brief Threadsafe UART Module
@@ -66,12 +66,12 @@
 *   @note And reading through it, it's recomended to just use the naive approach if you are gonna add a bunch of elements to a list
 *   @note and read through them often
 */
-#define PRIORITY_QUEUE_HEAP
+// #define PRIORITY_QUEUE_HEAP
 
 /*!
 *   @brief Red Black tree node self balancing tree module
 */
-#define RED_BLACK_TREE_MODULE
+// #define RED_BLACK_TREE_MODULE
 
 /*!
 *   @brief AVL self balancing tree module
@@ -82,11 +82,11 @@
 *   @brief Circular string buffer module. 
 *   @note allows us to save a bunch of strings into a circular buffer for debugging purposes. 
 */
-#define CIRCULAR_BUFFER_STRING_MODULE 
+// #define CIRCULAR_BUFFER_STRING_MODULE 
 
 /*!
 *   @brief Circular Buffer Queue Module 
 */
-#define CIRCULAR_BUFFER_POINTER_MODULE 
+// #define CIRCULAR_BUFFER_POINTER_MODULE 
 
 #endif 

@@ -22,16 +22,17 @@ struct RedBlackTreePointerNode{
     void *ptr;
 
     /*!
-    *   @brief Flag that determines whether or not node is red or black
-    *   @note  True: Red. False: Black,
+    *   @brief Flag that determines whether or not node is red or black. True: Red. False: Black
+    *   @note  True: Red. False: Black. 
     */
     bool red_black = false; 
 
     /*!
-    *   @brief Left and right pointer nodes for the tree. 
+    *   @brief Left, right and parent pointer nodes for the tree. 
     */
     struct RedBlackTreePointerNode *left = NULL;   
     struct RedBlackTreePointerNode *right = NULL; 
+    struct RedBlackTreePointerNode *parent = NULL; 
 };
 
 /*!
