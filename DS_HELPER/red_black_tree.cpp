@@ -93,28 +93,60 @@ static RedBlackTreePointerNode* insertion_helper(struct RedBlackTreePointerNode*
     return node; 
 }
 
-static void check_case_a(struct RedBlackTreePointerNode* node){
+/*!
+*   @brief Helper function that lets us handle flaging when our uncle is either red or black
+*   @param struct RedBlackTreePointerNode* (current node that we are checking, so we flag up the stack)
+*/
+static void check_uncle_red_black(struct RedBlackTreePointerNode* node){
+    // Checking to see if we have a parent
     if(node->parent == NULL)
         return; 
+
+    // We define the parent
+    struct RedBlackTreePointerNode *parent = node->parent; 
     
+    // If our parent is red, then we check out 
+    if(!parent->red_black)
+        return; 
+    
+    // If we don't have a grand parent, we check out
     if(node->parent->parent == NULL)
         return; 
 
+    // Then we define the grandparent
     struct RedBlackTreePointerNode *grand_parent = node->parent->parent; 
 
-    if(grand_parent->left == NULL) 
-    
-    if(grand_parent->right == NULL)
-    
+    // Instantiate the uncle
+    struct RedBlackTreePointerNode *uncle; 
 
-     node->parent->parent == NULL || node->parent->parent->left == NULL || node->parent->parent)
-     
+    // Depending on which node pointer matches with the parent
+    // We point the uncle to something relevant. 
+    if(node->parent == grand_parent->left)
+        uncle = grand_parent->right; 
+    else
+        uncle = grand_parent->left; 
+
+    // If our uncle is flagged as red_black
+    if(uncle != NULL){
+        if(uncle->red_black){
+            parent->red_black = false; 
+            grand_parent->red_black = true; 
+            uncle->red_black = false; 
+            check_uncle_red_black(grand_parent); 
+        }
+    } 
+    
 }
+
+/*!
+*   @brief Helper function that helps us when the uncle of our node is flagged as blac
+*   @param struct RedBlackTreePointerNode* (current node that we are checking, so we flag up the stack)
+*/ 
 
 /*!
 *   @brief Inserts a node into the tree with a given reference number and value
 *   @param uint32_t reference number
-*   @param void* general purpose pointer. 
+*   @param void* general purpose pointer
 */  
 void RedBlackTreePointerModule::insert(void *ptr, uint32_t reference_number){
     if(this->head == NULL){
@@ -133,6 +165,7 @@ void RedBlackTreePointerModule::insert(void *ptr, uint32_t reference_number){
     new_node->ptr = ptr; 
     new_node->red_black = true;
 
+    check_uncle_red_black(new_node); 
 }
 
 #endif

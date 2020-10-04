@@ -71,7 +71,7 @@
 /*!
 *   @brief Red Black tree node self balancing tree module
 */
-// #define RED_BLACK_TREE_MODULE
+#define RED_BLACK_TREE_MODULE
 
 /*!
 *   @brief AVL self balancing tree module

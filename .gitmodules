@@ -7,3 +7,6 @@
 [submodule "HAL/SSD1351-OLED-DMA"]
 	path = HAL/SSD1351-OLED-DMA
 	url = git@github.com:william-redenbaugh/SSD1351-OLED-DMA.git
+[submodule "DS_HELPER/Red-Black-Tree"]
+	path = DS_HELPER/Red-Black-Tree
+	url = git@github.com:william-redenbaugh/Red-Black-Tree.git
