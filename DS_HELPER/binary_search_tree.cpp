@@ -1,5 +1,7 @@
 #include "binary_search_tree.hpp"
 
+#ifdef BINARY_SEARCH_TREE_MODULE
+
 /*!
 *   @brief Insert operation that lets us insert stimuli into the binary tree
 *   @param int (key that we are inserting that lets us manage computations)
@@ -168,3 +170,5 @@ BinarySearchTreePointerNode* BinarySearchTreePointerModule::minimum(void){
 BinarySearchTreePointerNode* BinarySearchTreePointerModule::maximum(void){
     return max_node(this->root); 
 }
+
+#endif
