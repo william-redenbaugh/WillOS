@@ -2,8 +2,8 @@
 My Own Operating System. Context switching heavily derived from TeensyThreads ftrias, just gotta give credit where credit is due. 
 
 # Supported Boards: 
-#### Teensy 4
-#### STM32F767ZI
+#### Teensy 4(Pre-emptive and cooperative switching)
+#### STM32F767ZI(Currently only supports cooperative switching)
 
 # TeensyThreads Context Switching
 Even though this is a fork from the TeensyThreads library, in reality it's a complete re-write and refractor. Most of the command calls have been moved around to c-style cpp, in reality this is my codebase now execpt for the context switching. 
