@@ -1,6 +1,10 @@
 # TeensyOS
 My Own Operating System. Context switching heavily derived from TeensyThreads ftrias, just gotta give credit where credit is due. 
 
+# Supported Boards: 
+#### Teensy 4
+#### STM32F767ZI
+
 # TeensyThreads Context Switching
 Even though this is a fork from the TeensyThreads library, in reality it's a complete re-write and refractor. Most of the command calls have been moved around to c-style cpp, in reality this is my codebase now execpt for the context switching. 
 
@@ -13,7 +17,7 @@ Here is an example where we create a thread, and sleep it every 1/10th of a seco
 #include "OS/OSThreadKernel.h"
 
 // Thread handler ID that we can use to manipulate a thread. 
-os_thread_t target_thread; 
+os_thread_id_t target_thread; 
 
 // Function that we are spawning with our thread. 
 void example_thread(void *parameters){
@@ -26,7 +30,7 @@ void example_thread(void *parameters){
 void setup(){
   os_init();
   // Instanciate the thread with the given thread ID if we want to instruct it later. 
-  target_thread = os_add_thread((thread_func_t)blinkthread, 0, -1, 0);
+  target_thread = os_add_thread((thread_func_t)example_thread, 0, -1, 0);
 }
 
 void loop(){
@@ -43,7 +47,7 @@ Here is an example where we create a thread, and put a mutex over a resource. Fo
 #include "OS/OSMutexKernel.h"
 
 // Thread handler ID that we can use to manipulate a thread. 
-os_thread_t target_thread; 
+os_thread_id_t target_thread; 
 
 // Mutex Lock that we will wrap around the serial interface. 
 MutexLock serial_mutex; 
@@ -69,7 +73,7 @@ void setup(){
   // We instanciate the resource. 
   os_init();
   // Instanciate the thread with the given thread ID if we want to instruct it later. 
-  target_thread = os_add_thread((thread_func_t)blinkthread, 0, -1, 0);
+  target_thread = os_add_thread((thread_func_t)example_thread, 0, -1, 0);
 }
 
 void loop(){
@@ -92,7 +96,7 @@ There are control bits that we can use to signal a thread. 32 per thread in fact
 #include "OS/OSMutexKernel.h"
 
 // Thread handler ID that we can use to manipulate a thread. 
-os_thread_t target_thread; 
+os_thread_id_t target_thread; 
 
 // Mutex Lock that we will wrap around the serial interface. 
 MutexLock serial_mutex; 
@@ -119,7 +123,7 @@ void setup(){
   // We instanciate the resource. 
   os_init();
   // Instanciate the thread with the given thread ID if we want to instruct it later. 
-  target_thread = os_add_thread((thread_func_t)blinkthread, 0, -1, 0);
+  target_thread = os_add_thread((thread_func_t)example_thread, 0, -1, 0);
 }
 
 void loop(){

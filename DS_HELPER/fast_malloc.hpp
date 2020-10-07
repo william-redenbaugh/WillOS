@@ -4,6 +4,8 @@
 #include <Arduino.h> 
 #include "OS/OSThreadKernel.h"
 
+#ifdef OS_FAST_MALLOC_MODULE
+
 /*!
 *   @brief The amount of space that 
 *   @note In Bytes
@@ -33,5 +35,7 @@ void fast_malloc_free(void *ptr);
 "
 */
 size_t fast_malloc_memblock_size(void *ptr); 
+
+#endif
 
 #endif

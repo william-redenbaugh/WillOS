@@ -96,7 +96,11 @@ public:
     *   @brief Deconstructor for priority queue
     */
     void deinit(void){
+        #ifdef FAST_MALLOC_MODULE 
         fast_malloc_free(this->node_list);
+        #else 
+        free(this->node_list); 
+        #endif
     }
 
     /*!
