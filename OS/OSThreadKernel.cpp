@@ -30,7 +30,6 @@
 *
 */
 
-
 #include "OSThreadKernel.h"
 
 #ifdef __IMXRT1062__

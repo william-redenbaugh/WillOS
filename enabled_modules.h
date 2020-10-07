@@ -5,17 +5,17 @@
 *   @brief Fast Malloc module for allocated HEAP data onto RAMBANK1 on Teensy4
 *   @note This is threadsafe module, non-thread-safe module is always availabe since it's used in scheduler
 */
-//#define OS_FAST_MALLOC_MODULE
+#define OS_FAST_MALLOC_MODULE
 
 /*!
 *   @brief Low priority work thread module
 */
-//#define LPWORK_MODULE
+#define LPWORK_MODULE
 
 /*!
 *   @brief Protobuffer Callbacks Handler module
 */
-//#define PROTOCALLBACKS_MODULE
+#define PROTOCALLBACKS_MODULE
 
 /*!
 *   @brief Operating System Semaphore Module
@@ -47,17 +47,17 @@
 /*!
 *   @brief IMU module for dealing with mpu6050 stuff
 */
-//#define MPU6050_MODULE
+#define MPU6050_MODULE
 
 /*!
 *   @brief Easy module that allows us to read voltages 
 */
-//#define VOLTAGE_READ_MODULE
+#define VOLTAGE_READ_MODULE
 
 /*!
 *   @brief Threadsafe UART Module
 */
-//#define SERIAL_MODULE 
+#define SERIAL_MODULE 
 
 /*!
 *   @brief Priority Queue(Heap approach) module
