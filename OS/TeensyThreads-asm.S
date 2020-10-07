@@ -115,7 +115,7 @@ context_switch_check:
   BEQ call_direct          // if so, thread is done, so switch
   SUB r1, #1               // otherwise, subtract 1 tick
   STR r1, [r0]             // and put it back
-  B to_exit                // and quit until next context_switch
+  // B to_exit                // and quit until next context_switch
 
 call_direct:
 
@@ -173,15 +173,17 @@ call_direct_active:
   LDR r0, = current_msp        // get address of the variable
   LDR r0, [r0]                 // get the actual value
   CMP r0, #0                   // is it 0? Then it's PSP
+  
   BNE to_exit                  // it's not 0, so it's MSP, all done
                                // if it's PSP, we need to switch PSP
   LDR r0, = current_sp         // get address of stack pointer
   LDR r0, [r0]                 // get the actual value
   MSR psp, r0                  // save it to PSP
   ORR lr, lr, #0b100           // set the PSP context switch
-
+  
+  
 to_exit:
   // Re-enable interrupts
   CPSIE I
   // Return. The CPU will change MSP/PSP as needed based on LR
-  BX lr
+  bx lr

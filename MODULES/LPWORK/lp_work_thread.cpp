@@ -1,6 +1,8 @@
 #include "lp_work_thread.h"
 #include <vector>
 
+#ifdef LPWORK_MODULE
+
 /*
 Author: William Redenbaugh
 Last Edit Date: 8/24/2020
@@ -91,8 +93,9 @@ void lp_thread_func(void){
             run_tasks();
 
         // If there are no threads, then we just chill, sleep the thread for a short while
+        // Also serves as a "time remainder thread" for now
         else
-            os_thread_delay_ms(100);
+            _os_yield(); 
     }
 }
 
@@ -207,3 +210,4 @@ extern LPThreadInitStatus_t del_lwip_task(uint32_t thread_handle){
     }
     return LP_THREAD_DELETE_UNDEFINED; 
 }
+#endif

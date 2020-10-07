@@ -1,6 +1,11 @@
 #ifndef _LP_WORK_THREAD_H
 #define _LP_WORK_THREAD_H
 
+// So we can configure modules
+#include "../../enabled_modules.h"
+
+#ifdef LPWORK_MODULE
+
 #include <Arduino.h> 
 #include "OS/OSThreadKernel.h"
 #include "OS/OSMutexKernel.h"
@@ -42,3 +47,4 @@ extern LPThreadInitStatus_t enable_lwip_task(uint32_t thread_handle);
 extern LPThreadInitStatus_t del_lwip_task(uint32_t thread_handle);
 
 #endif 
+#endif

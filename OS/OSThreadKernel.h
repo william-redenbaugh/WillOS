@@ -33,11 +33,13 @@ Last Edit Date: 8/9/2020
 #define _THREADS_H
 
 // Currenly the only platform supported by Will-OS is the Teensy 4
-#ifdef __IMXRT1062__
 
 // Importing primary libraries. 
 #include <Arduino.h>
 #include <stdint.h>
+
+// So we can malloc stuff on our faster memory
+#include "DS_HELPER/fast_malloc.hpp"
 
 /*!
 * @brief Enumerated State of different operating system states. 
@@ -60,7 +62,8 @@ enum thread_state_t{
   THREAD_RUNNING    = 1, 
   THREAD_ENDED      = 2, 
   THREAD_ENDING     = 3, 
-  THREAD_SUSPENDED  = 4
+  THREAD_SUSPENDED  = 4, 
+  THREAD_SLEEPING   = 5
 }; 
 
 /*!
@@ -68,7 +71,7 @@ enum thread_state_t{
 *   @note Unless we transition to a linked list(which is unlikely), this will remain the max limit
 */
 #ifndef OS_EXTERN_MAX_THREADS
-static const int MAX_THREADS = 128;
+static const int MAX_THREADS = 20;
 #else
 static const int MAX_THREADS = OS_EXTERN_MAX_THREADS; 
 #endif 
@@ -190,6 +193,13 @@ typedef struct{
 
   // Flags to set or clear signals to a thread. 
   volatile uint32_t thread_set_flags = 0x0000;
+
+  // Thread priority
+  uint8_t thread_priority; 
+
+  // Next time the thread will run (in milliseconds)
+  uint32_t next_run_ms; 
+
 }thread_t;
 
 /*!
@@ -271,6 +281,8 @@ void threads_svcall_isr(void);
 * @note  n/a
 */
 void threads_systick_isr(void);
+
+// End of extern c programgs. 
 }
 
 /*!
@@ -311,6 +323,18 @@ void threads_init(void);
 *   @returns none
 */
 void os_get_next_thread();
+
+/*!
+* @brief Adds a thread to Will-OS Kernel
+* @note Paralelism at it's finest!
+* @param will_os_thread_func_t thread(pointer to thread function call begining of program counter)
+* @param void *arg(pointer arguement to parameters for thread)
+* @param uint8_t thread_priority (how important the thread is)
+* @param void *stack(pointer to begining of thread stack)
+* @param int stack_size(size of the allocated threadstack)
+* @returns none
+*/
+os_thread_id_t os_add_thread(thread_func_t p, void * arg, uint8_t thread_priority, int stack_size, void *stack);
 
 /*!
 * @brief Adds a thread to Will-OS Kernel
@@ -494,5 +518,5 @@ thread_signal_status_t os_checkbits_thread(thread_signal_t thread_signal, os_thr
 void os_thread_waitbits_notimeout(thread_signal_t thread_signal);
 
 // This endif is for checking if we are using the Teensy4 IMXRT board
-#endif
+
 #endif

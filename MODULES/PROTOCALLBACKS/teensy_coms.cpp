@@ -1,5 +1,7 @@
 #include "teensy_coms.h"
 
+#ifdef PROTOCALLBACKS_MODULE
+
 /*!
 *   @brief Maximum amount of callbacks handlers defined here,
 *   @note Currently we limit it to 64 since the entire arrays are statically
@@ -48,7 +50,14 @@ static uint8_t in_arr_buffer[512];
 */
 static os_thread_id_t message_management_thread_id; 
 
-static void run_messaging_once(void);
+/*!
+*   @brief The hardware Serial object that we are using. 
+*/
+HardwareSerial *serial;
+
+static inline void run_messaging_once(void);
+MessageData unpack_message_data(uint8_t *arr, uint32_t len);
+
 
 /*!
 *   @brief The thread function that we will do all of our message management stuff in
@@ -73,15 +82,15 @@ void message_management_thread(void *parameters){
 /*!
 *   @brief Once we have gotten a message header, then we read the remainder of the message. 
 */
-static void get_rest_of_message(uint32_t msg_size){
+static inline void get_rest_of_message(uint32_t msg_size){
     // No point in reading if there isn't anything. 
     if(msg_size){
         // While we are waiting for message data to come in
-        while(os_usb_serial_bytes_available() < msg_size)
+        while(serial->available() < msg_size)
             os_thread_delay_ms(1);
    
         // Read in the serial buffer. 
-        os_usb_serial_read(in_arr_buffer,(size_t)msg_size); 
+        serial->readBytes(in_arr_buffer,(size_t)msg_size); 
     }
 }
 
@@ -91,7 +100,7 @@ static void get_rest_of_message(uint32_t msg_size){
 * param MessageData message_data
 * returns none
 */
-static void check_req_res(MessageData message_data){
+static inline void check_req_res(MessageData message_data){
     uint32_t n = 0;  
     uint32_t x = 0; 
     while(1){
@@ -120,16 +129,15 @@ static void check_req_res(MessageData message_data){
 /*!
 *   @brief Function that get's called roughly every 14ms to check thread stuff. 
 */
-static void run_messaging_once(void){
+static inline void run_messaging_once(void){
     // Making things "threadsafe"
     MessageMutex.lockWaitIndefinite(); 
     // If more than 16 bytes are available, then it's likely the serial buffer has been filled. 
-    if(os_usb_serial_bytes_available() >= 16){ 
+    if(serial->available() >= 16){ 
         // Transfer the data from the serial buffer 
         // Our local buffer. 
         uint8_t arr[16]; 
-        os_usb_serial_read(arr, 16);
-        
+        serial->readBytes(arr, 16);
         // Unpack the information
         MessageData message_data = unpack_message_data(arr, 16);
         
@@ -139,6 +147,20 @@ static void run_messaging_once(void){
     }
     // Relinquise the resource lock 
     MessageMutex.unlock(); 
+}
+
+/*!
+* @brief Allows us to read a pointer of information, and unpack that information. 
+* @note Be careful with pointers!
+* @param uint8_t *arr(pointer to array that contains the message)
+* @param uint32_t len(length of the array)
+* @return MessageData struct with all the information
+*/
+MessageData unpack_message_data(uint8_t *arr, uint32_t len){
+    MessageData msg_data;
+    pb_istream_t msg_in = pb_istream_from_buffer(arr, len);
+    pb_decode(&msg_in, MessageData_fields, &msg_data);
+    return msg_data; 
 }
 
 /*!
@@ -214,12 +236,14 @@ extern MessageCallbackSetupStatus remove_message_callback(uint32_t callback_hand
 
 /*!
 *   @brief  Starts up all of the message management stuff so we can get messages!
+*   @param HardwareSerial *serial_ptr (which serial device we are connecting to)
+*   @param uint32_t baud(speed of serial device)
 *   @note  Just call this, and then attach whatever event driven messaging stuff you feel you need to do 
 */
-void message_callbacks_begin(void){
-    // Starts up the serial interface.
-    os_usb_serial_begin(); 
-    
+void message_callbacks_begin(HardwareSerial *serial_ptr, uint32_t baud){
+    serial = serial_ptr; 
+    // Start up the serial device. 
+    serial->begin(baud); 
     // We have our own thread that deals with the message management stuff. 
     message_management_thread_id = os_add_thread(&message_management_thread, NULL, MESSAGE_MANAGEMENT_STACK_SIZE, &message_management_stack);
 }
@@ -231,3 +255,5 @@ void message_callbacks_end(void){
     // We kill our thread if prompted to end our message management callbacks
     os_kill_thread(message_management_thread_id); 
 }
+
+#endif

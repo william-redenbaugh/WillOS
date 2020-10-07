@@ -1,6 +1,11 @@
 #ifndef _TEENSY_COMS_H
 #define _TEENSY_COMS_H
 
+// So we can configure modules
+#include "../../enabled_modules.h"
+
+#ifdef PROTOCALLBACKS_MODULE
+
 // Include Arduino's primary libraries. 
 #include <Arduino.h> 
 
@@ -9,15 +14,9 @@
 #include "OS/OSMutexKernel.h"
 #include "OS/OSSignalKernel.h"
 
-// Include our RTOS device drivers. 
-#include "HAL/OSSerial.h"
-
 // Include our protobuffer messages
 #include "messagedata.pb.h"
-
-// Helper library that speeds up development
-// Involving deserialization
-#include "proto_msg_unpack.h"
+#include "nanopb/pb_decode.h"
 
 // Used so we know whether or not our callback initialization was accepted. 
 enum MessageCallbackSetupStatus{
@@ -65,11 +64,13 @@ extern MessageCallbackSetupReturn add_message_callback(MessageData_MessageType m
 */
 extern MessageCallbackSetupStatus remove_message_callback(uint32_t callback_handler_id); 
 
-/*
+/*!
 *   @brief  Starts up all of the message management stuff so we can get messages!
-*   @notes  Just call this, and then attach whatever event driven messaging stuff you feel you need to do 
+*   @param HardwareSerial *serial_ptr (which serial device we are connecting to)
+*   @param uint32_t baud(speed of serial device)
+*   @note  Just call this, and then attach whatever event driven messaging stuff you feel you need to do 
 */
-void message_callbacks_begin(void);
+void message_callbacks_begin(HardwareSerial *serial_ptr, uint32_t baud);
 
 /*
 *   @brief Kills the message management thread. 
@@ -77,3 +78,4 @@ void message_callbacks_begin(void);
 void message_callbacks_end(void);
 
 #endif 
+#endif

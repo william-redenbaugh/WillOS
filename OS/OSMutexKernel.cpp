@@ -1,4 +1,5 @@
 #include "OSMutexKernel.h"
+#ifdef MUTEX_MODULE
 
 /*
 Author: William Redenbaugh, Fernando Trias
@@ -34,15 +35,16 @@ MutexLockReturnStatus __attribute__ ((noinline)) MutexLock::lock(uint32_t timeou
 
     // If we can't acquire the lock :(
     if(timeout_ms && (millis() - start > timeout_ms))
-      return MUTEX_ACQUIRE_FAIL;
+      break;
 
     // Reqlinquise this thread to someone else
     _os_yield();
 
   }
 
-  // If we can't get the mutex, we clear out the cpu pipeline. 
+  // If we can't get the mutex, we clear out the cpu pipeline, and ensure all memory fetches have completed. 
   __flush_cpu_pipeline();
+
   // Let the managing thread know that we failed. 
   return MUTEX_ACQUIRE_FAIL;
 }
@@ -86,10 +88,6 @@ void __attribute__ ((noinline)) MutexLock::lockWaitIndefinite(void){
     // Reqlinquise this thread to someone else
     _os_yield();
   }
-  // If we can't get the mutex, we clear out the cpu pipeline. 
-  __flush_cpu_pipeline();
-  // Let the managing thread know that we failed. 
-  return;
 }
 
 /*!
@@ -104,3 +102,5 @@ void __attribute__ ((noinline)) MutexLock::unlock(void){
   __flush_cpu_pipeline();
   os_start(os_state);
 } 
+
+#endif
