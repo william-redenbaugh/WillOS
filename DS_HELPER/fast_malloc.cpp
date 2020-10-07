@@ -1,5 +1,7 @@
 #include "fast_malloc.hpp"
 
+#ifdef OS_FAST_MALLOC_MODULE
+
 /*!
 *   @brief Got a lot of pointers from this article: https://tharikasblogs.blogspot.com/p/how-to-write-your-own-malloc-and-free.html
 *   @note Implamentation derived from this example
@@ -33,7 +35,7 @@ static volatile uint8_t fast_malloc_array[FAST_MALLOC_SIZE_BYTES];
 /*!
 *   @brief Pointing to original block of memory, which is free at startup
 */  
-struct mem_block *free_list = (void*)fast_malloc_array; 
+struct mem_block *free_list = (struct mem_block*)(fast_malloc_array); 
 
 /*!
 *   @brief Function declaration
@@ -210,3 +212,5 @@ size_t fast_malloc_memblock_size(void *ptr){
     
     return 0;  
 }
+
+#endif

@@ -33,7 +33,6 @@ Last Edit Date: 8/9/2020
 #define _THREADS_H
 
 // Currenly the only platform supported by Will-OS is the Teensy 4
-#ifdef __IMXRT1062__
 
 // Importing primary libraries. 
 #include <Arduino.h>
@@ -519,5 +518,5 @@ thread_signal_status_t os_checkbits_thread(thread_signal_t thread_signal, os_thr
 void os_thread_waitbits_notimeout(thread_signal_t thread_signal);
 
 // This endif is for checking if we are using the Teensy4 IMXRT board
-#endif
+
 #endif

@@ -10,7 +10,11 @@ void PointerQueue::enque(void *ptr){
 
     // The assumption is that if the tail is null, so is the head
     if(this->tail == NULL){
-        new_tail = (QueueLinkedList*)fast_malloc(sizeof(QueueLinkedList)); 
+        #ifdef OS_FAST_MALLOC_MODULE
+        new_tail = (QueueLinkedList*)fast_malloc(sizeof(QueueLinkedList));
+        #else
+        new_tail = new QueueLinkedList; 
+        #endif 
         this->tail = new_tail; 
         // Add everything
         this->head = this->tail; 
@@ -18,7 +22,13 @@ void PointerQueue::enque(void *ptr){
     } 
     
     else{
-        new_tail = (QueueLinkedList*)fast_malloc(sizeof(QueueLinkedList)); 
+        #ifdef OS_FAST_MALLOC_MODULE
+        new_tail = (QueueLinkedList*)fast_malloc(sizeof(QueueLinkedList));
+        #else
+        new_tail = new QueueLinkedList; 
+        #endif 
+        this->tail = new_tail; 
+
         // QueueLinkedList *new_tail =  
         new_tail->next = NULL; 
         new_tail->ptr = ptr;
@@ -46,7 +56,11 @@ void* PointerQueue::deque(void){
     QueueLinkedList *new_head = this->head->next; 
 
     // Make sure that memory is given back to the system 
+    #ifdef OS_FAST_MALLOC_MODULE
     fast_malloc_free(this->head); 
+    #else
+    free(this->head); 
+    #endif
 
     // Then increment the head. 
     this->head = new_head; 
