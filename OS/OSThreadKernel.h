@@ -292,6 +292,12 @@ void threads_systick_isr(void);
 extern "C" void _os_yield(void);
 
 /*!
+* @brief Helper function that provides clarity as to how system works.
+* @note This is only during stm32 operations. 
+*/
+#define stm32_os_start() _os_yield()
+
+/*!
 * @brief Sleeps the thread through a hypervisor call. 
 * @note Checks in roughly every milliscond until thread is ready to start running again
 * @param int milliseconds since last system tick
@@ -313,7 +319,11 @@ extern void os_thread_delay_ms(int millisecond);
 *   @param none
 *   @returns none
 */
-void threads_init(void);
+void threads_init(void); 
+
+/*!
+* @brief To keep standards, we say os_init() instead
+*/
 #define os_init() threads_init()
 
 /*!
