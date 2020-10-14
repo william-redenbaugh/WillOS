@@ -57,7 +57,7 @@
 /*!
 *   @brief Threadsafe UART Module
 */
-//#define SERIAL_MODULE 
+#define SERIAL_MODULE 
 
 /*!
 *   @brief Priority Queue(Heap approach) module

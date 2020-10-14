@@ -298,12 +298,20 @@ extern "C" void _os_yield(void);
 #define stm32_os_start() _os_yield()
 
 /*!
-* @brief Sleeps the thread through a hypervisor call. 
+* @brief delays the thread through a hypervisor call. 
 * @note Checks in roughly every milliscond until thread is ready to start running again
 * @param int milliseconds since last system tick
 * @returns none
 */
 extern void os_thread_delay_ms(int millisecond);
+
+/*!
+* @brief Sleeps the thread through a hypervisor call. 
+* @note Sleeps the thread for the alloted time, and wakes up once the thread is ready
+* @param int milliseconds since last system tick
+* @returns none
+*/
+extern void os_thread_sleep_ms(int millisecond);
 
 /*!
 * @brief Sleeps the thread through a hypervisor call. 

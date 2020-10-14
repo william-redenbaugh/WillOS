@@ -775,7 +775,8 @@ void os_thread_waitbits_notimeout(thread_signal_t thread_signal){
   }
 }
 
-#else
+#elif (STM32F407xx | STM32F767xx) /** Currently supports STM32F407 and STM32F767 boards **/
+
 unsigned int time_start;
 unsigned int time_end;
 
@@ -996,6 +997,23 @@ extern void os_thread_delay_ms(int millisecond){
 }
 
 /*!
+* @brief Sleeps the thread through a hypervisor call. 
+* @note Sleeps the thread for the alloted time, and wakes up once the thread is ready
+* @param int milliseconds since last system tick
+* @returns none
+*/
+extern void os_thread_sleep_ms(int millisecond){
+  int start_del = millis();
+
+  // So the operating system knows when to start back up the next thread. 
+  current_thread->next_run_ms = start_del + millisecond;  
+  // Signals that thread is sleeping, and must be awoken once ready. 
+  current_thread->flags = THREAD_SLEEPING; 
+
+  _os_yield(); 
+}
+
+/*!
 * @brief Sets up our zero thread. 
 * @note only to be called at setup
 */
@@ -1086,11 +1104,19 @@ inline void os_get_next_thread() {
     current_thread_id++;
     if (current_thread_id >= MAX_THREADS | current_thread_id > thread_count){
       current_thread_id = 1; // thread 0 is MSP; always active so return
-      break;
     }
 
     if(system_threads[current_thread_id].flags == THREAD_RUNNING)
       break; 
+
+    // If a thread is sleeping. 
+    else if(system_threads[current_thread_id].flags == THREAD_SLEEPING){
+      // And it's time to wake up the thread. 
+      if(system_threads[current_thread_id].next_run_ms >= millis()){
+        system_threads[current_thread_id].flags = THREAD_RUNNING; 
+        break; 
+      }
+    }
 }
 
   current_tick_count = system_threads[current_thread_id].ticks;
@@ -1338,8 +1364,6 @@ bool os_signal_thread(thread_signal_t thread_signal, os_thread_id_t target_threa
     system_threads[target_thread_id].thread_set_flags |= (1 << (uint32_t)thread_signal); 
     return true; 
   }
-
-
   return false; 
 }
 
