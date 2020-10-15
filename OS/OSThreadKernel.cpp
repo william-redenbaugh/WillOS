@@ -827,7 +827,12 @@ struct scheduler_info{
   * complexity and possibly bugs. So to simplifiy for now, we use an array.
   * But in the future, a linked list might be more appropriate.
 */
-thread_t system_threads[MAX_THREADS];
+static thread_t system_threads[MAX_THREADS];
+
+/*!
+* @brief Thread priority object that allows us to have an organized thread priority 
+*/
+static PriorityQueuePointerNaive thread_priorities; 
 
 // These variables are used by the assembly context_switch() function.
 // They are copies or pointers to data in Threads and thread_t
@@ -1102,7 +1107,9 @@ inline void os_get_next_thread() {
     stack_overflow_isr();
   
   bool sitting = false; 
-  // Esentially sits in this loop until there is a thread!
+
+  // Basic non prioritized threading
+  /*
   while(1) {
     current_thread_id++;
     if(sitting){
@@ -1126,13 +1133,47 @@ inline void os_get_next_thread() {
         break; 
       }
     }
-}
+  }
 
   current_tick_count = system_threads[current_thread_id].ticks;
   current_thread = &system_threads[current_thread_id];
   current_save = &system_threads[current_thread_id].save;
   current_msp = (current_thread_id==0?1:0);
   current_sp = system_threads[current_thread_id].sp;
+*/
+
+  // The head thread is actually our remainder time thread, so it's the last thing we check
+  PriorityQueueNaiveNode *head_node = thread_priorities.peek_top_node(); 
+  
+  // The first thread is the next thread. 
+  PriorityQueueNaiveNode *current_node = head_node->next; 
+
+  // The thread we are using. 
+  thread_t *thread; 
+  while(1){
+    // Casting general pointer as a thread pointer
+    thread = (thread_t*)current_node->ptr; 
+
+
+    // If we reach the end and there are no more threads, then we go into the remainder thread. 
+    if(thread == NULL){
+      thread = (thread_t*)head_node->ptr; 
+      break; 
+    }
+
+
+    // The highest priority thread runs first!
+    if(thread->flags == THREAD_RUNNING)
+      break; 
+      
+    current_node = current_node->next; 
+  } 
+
+  current_tick_count = thread->ticks; 
+  current_thread = thread; 
+  current_save = &(thread->save); 
+  current_msp = 0; 
+  current_sp = thread->sp; 
 }
 
 /*!
@@ -1235,7 +1276,10 @@ os_thread_id_t os_add_thread(thread_func_t p, void * arg, uint8_t thread_priorit
       // If the operating system was started before, we restart the OS
       if (old_state == OS_STARTED || old_state == OS_FIRST_RUN) 
         os_start();
-      
+
+      // Inserts thread into a priority heap, allowing us to organize threads by priority.       
+      thread_priorities.insert((void*)tp, (uint16_t)thread_priority); 
+
       return i;
     }
   }

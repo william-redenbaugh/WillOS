@@ -140,7 +140,17 @@ public:
     *   @param *ptr to information
     *   @returns priority of that pointer data, or -1 if it cannot be found
     */
-    int check_exists(void *ptr);     
+    int check_exists(void *ptr); 
+
+    /*!
+    *   @returns How many elements we have
+    */
+    int num_elemnts(void){return this->total_nodes; }   
+
+    /*!
+    *   @brief Array pointer to all elements
+    */
+    PriorityQueueHeapNode* all_elements(void){return this->node_list; }
 
 private: 
 

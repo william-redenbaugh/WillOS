@@ -42,6 +42,11 @@ Last Edit Date: 8/9/2020
 #include "DS_HELPER/fast_malloc.hpp"
 
 /*!
+* @brief Allows us to have priority to our scheduled threads. 
+*/
+#include "DS_HELPER/priority_queue.hpp"
+
+/*!
 * @brief Enumerated State of different operating system states. 
 * @note Used for dealing with different threading purposes. 
 */
@@ -71,7 +76,7 @@ enum thread_state_t{
 *   @note Unless we transition to a linked list(which is unlikely), this will remain the max limit
 */
 #ifndef OS_EXTERN_MAX_THREADS
-static const int MAX_THREADS = 20;
+static const int MAX_THREADS = 24;
 #else
 static const int MAX_THREADS = OS_EXTERN_MAX_THREADS; 
 #endif 
