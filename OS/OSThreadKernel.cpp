@@ -33,10 +33,7 @@
 
 #include "OSThreadKernel.h"
 
-#ifdef __IMXRT1062__
-
-unsigned int time_start;
-unsigned int time_end;
+#if defined(__IMXRT1062__)
 
 /*!
 *   @brief Current thread that we have context of.
@@ -65,9 +62,6 @@ int OS_DEFAULT_TICKS = 10;
 #else 
 int OS_DEFAULT_TICKS = EXTERN_OS_DEFAULT_TICKS;
 #endif 
-
-//ADDED, total time to spend asleep
-volatile int substractor = 0;
 
 extern volatile uint32_t systick_millis_count;
 
@@ -775,19 +769,19 @@ void os_thread_waitbits_notimeout(thread_signal_t thread_signal){
   }
 }
 
-#elif (STM32F407xx | STM32F767xx) /** Currently supports STM32F407 and STM32F767 boards **/
+#elif defined(STM32F407xx) || defined(STM32F767xx)
 
 /*!
 * @brief Thread that calculates remainder stuff. 
 * @param void *params
 */
 static void remainder_thread(void *params); 
-// Stack array and size for remainder thread
+
+/*!
+* @brief Remaind thread stack space and statically allocated array 
+*/
 static const int remainder_thread_stack_space = 256; 
 uint8_t remainder_thread_stack[remainder_thread_stack_space]; 
-
-unsigned int time_start;
-unsigned int time_end;
 
 /*!
 *   @brief Current thread that we have context of.
@@ -817,9 +811,6 @@ int OS_DEFAULT_TICKS = 10;
 int OS_DEFAULT_TICKS = EXTERN_OS_DEFAULT_TICKS;
 #endif 
 
-//ADDED, total time to spend asleep
-volatile int substractor = 0;
-
 extern volatile uint32_t systick_millis_count;
 
 //ADDED, per task sleep time info
@@ -843,47 +834,47 @@ thread_t system_threads[MAX_THREADS];
 // and put here seperately in order to simplify the code.
 extern "C" {
 
-/*!
-*   @brief Current count of system tick
-*   @note in TeensyThreads this was currentCount
-*/
-static int current_use_systick;      
+  /*!
+  *   @brief Current count of system tick
+  *   @note in TeensyThreads this was currentCount
+  */
+  static int current_use_systick;      
 
-/*!
-*   @brief The current thread in the program. 
-*   @note Comes preinitialized. In TeensyThreads this was currentActive
-*/
-int current_active_state;          
+  /*!
+  *   @brief The current thread in the program. 
+  *   @note Comes preinitialized. In TeensyThreads this was currentActive
+  */
+  int current_active_state;          
 
-/*!
-*   @brief Current count of system tick
-*   @note in TeensyThreads this was currentCount
-*/
-int current_tick_count;
+  /*!
+  *   @brief Current count of system tick
+  *   @note in TeensyThreads this was currentCount
+  */
+  int current_tick_count;
 
-/*!
-*   @brief The current register stack on the program
-*   @note In TeensyThreads this was *currentThread
-*/
-static thread_t *current_thread;  
+  /*!
+  *   @brief The current register stack on the program
+  *   @note In TeensyThreads this was *currentThread
+  */
+  static thread_t *current_thread;  
 
-/*!
-* @note inherited from TeensyThreads as currentSave
-* @note This points to the saved stack of the registers for the thread. 
-*/
-void *current_save;
+  /*!
+  * @note inherited from TeensyThreads as currentSave
+  * @note This points to the saved stack of the registers for the thread. 
+  */
+  void *current_save;
 
-/*!
-* @brief Whether or not we have reached the top of the stack(aka stack overflow)
-* @note in TeensyThreads this was currentMSP, try to avoid getting here. 
-*/
-int current_msp;             
+  /*!
+  * @brief Whether or not we have reached the top of the stack(aka stack overflow)
+  * @note in TeensyThreads this was currentMSP, try to avoid getting here. 
+  */
+  int current_msp;             
 
-/*!
-*   @brief Current program thread stack pointer 
-*   @note in TeensyThreads this was currentSP
-*/
-void *current_sp;
+  /*!
+  *   @brief Current program thread stack pointer 
+  *   @note in TeensyThreads this was currentSP
+  */
+  void *current_sp;
   
 }
 

@@ -291,11 +291,13 @@ void threads_systick_isr(void);
 */
 extern "C" void _os_yield(void);
 
+#if defined(STM32F407xx) || defined(STM32F767xx)
 /*!
 * @brief Helper function that provides clarity as to how system works.
 * @note This is only during stm32 operations. 
 */
 #define stm32_os_start() _os_yield()
+#endif 
 
 /*!
 * @brief delays the thread through a hypervisor call. 
