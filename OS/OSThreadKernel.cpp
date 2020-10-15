@@ -775,7 +775,17 @@ void os_thread_waitbits_notimeout(thread_signal_t thread_signal){
   }
 }
 
-#else
+#elif (STM32F407xx | STM32F767xx) /** Currently supports STM32F407 and STM32F767 boards **/
+
+/*!
+* @brief Thread that calculates remainder stuff. 
+* @param void *params
+*/
+static void remainder_thread(void *params); 
+// Stack array and size for remainder thread
+static const int remainder_thread_stack_space = 256; 
+uint8_t remainder_thread_stack[remainder_thread_stack_space]; 
+
 unsigned int time_start;
 unsigned int time_end;
 
@@ -996,6 +1006,23 @@ extern void os_thread_delay_ms(int millisecond){
 }
 
 /*!
+* @brief Sleeps the thread through a hypervisor call. 
+* @note Sleeps the thread for the alloted time, and wakes up once the thread is ready
+* @param int milliseconds since last system tick
+* @returns none
+*/
+extern void os_thread_sleep_ms(int millisecond){
+  int start_del = millis();
+
+  // So the operating system knows when to start back up the next thread. 
+  current_thread->next_run_ms = start_del + millisecond;  
+  // Signals that thread is sleeping, and must be awoken once ready. 
+  current_thread->flags = THREAD_SLEEPING; 
+
+  _os_yield(); 
+}
+
+/*!
 * @brief Sets up our zero thread. 
 * @note only to be called at setup
 */
@@ -1029,6 +1056,8 @@ void threads_init(void){
   current_sp = 0;
   current_tick_count = OS_DEFAULT_TICKS;
   current_active_state = OS_FIRST_RUN;
+
+  os_add_thread(&remainder_thread, NULL, remainder_thread_stack_space, remainder_thread_stack);
 }
 
 /*!
@@ -1081,16 +1110,31 @@ inline void os_get_next_thread() {
   if (current_thread_id && ((uint8_t*)current_thread->sp - current_thread->stack <= 8)) 
     stack_overflow_isr();
   
+  bool sitting = false; 
   // Esentially sits in this loop until there is a thread!
   while(1) {
     current_thread_id++;
+    if(sitting){
+      current_thread_id = 1; 
+      break; 
+    }
+
     if (current_thread_id >= MAX_THREADS | current_thread_id > thread_count){
-      current_thread_id = 1; // thread 0 is MSP; always active so return
-      break;
+      current_thread_id = 2; // thread 0 is MSP; always active so return
+      sitting = true; 
     }
 
     if(system_threads[current_thread_id].flags == THREAD_RUNNING)
       break; 
+
+    // If a thread is sleeping. 
+    else if(system_threads[current_thread_id].flags == THREAD_SLEEPING){
+      // And it's time to wake up the thread. 
+      if(system_threads[current_thread_id].next_run_ms <= millis()){
+        system_threads[current_thread_id].flags = THREAD_RUNNING; 
+        break; 
+      }
+    }
 }
 
   current_tick_count = system_threads[current_thread_id].ticks;
@@ -1338,8 +1382,6 @@ bool os_signal_thread(thread_signal_t thread_signal, os_thread_id_t target_threa
     system_threads[target_thread_id].thread_set_flags |= (1 << (uint32_t)thread_signal); 
     return true; 
   }
-
-
   return false; 
 }
 
@@ -1415,5 +1457,15 @@ void os_thread_waitbits_notimeout(thread_signal_t thread_signal){
       return; 
     _os_yield();  
   }
+}
+
+/*!
+* @brief Thread that calculates remainder stuff, and sits around 
+* @param void *params
+*/
+static void remainder_thread(void *params){
+  for(;;){
+    _os_yield();
+  } 
 }
 #endif
