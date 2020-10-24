@@ -190,7 +190,7 @@ typedef struct{
   // Flags for dealing with thread 
   volatile thread_state_t flags = THREAD_EMPTY;
   
-  // Where are we in the program so far
+  // Program counter register. 
   void *sp;
 
   // Thread ticks  
@@ -199,8 +199,8 @@ typedef struct{
   // Flags to set or clear signals to a thread. 
   volatile uint32_t thread_set_flags = 0x0000;
 
-  // Thread priority
-  uint8_t thread_priority; 
+  // Thread priority(Redundant/depricated)
+  // uint8_t thread_priority; 
 
   // Next time the thread will run (in milliseconds)
   uint32_t next_run_ms; 
@@ -423,7 +423,12 @@ int os_start(int prev_state = -1);
 /*!
 * @returns The current thread's ID. 
 */
-os_thread_id_t os_current_id(void);
+os_thread_id_t _os_current_id(void);
+
+/*!
+* @return Current pointer to thread information
+*/
+thread_t *_os_current_thread(void); 
 
 /*!
 * @brief unused ISR routine that we can use for whatever

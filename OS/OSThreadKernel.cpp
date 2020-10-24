@@ -1021,13 +1021,14 @@ extern void os_thread_sleep_ms(int millisecond){
 /*!
 * @brief Sets up our zero thread. 
 * @note only to be called at setup
+* @note We do still setup the thread, but we leave it alone, as there seems to be an issue with this thread. Will look into further into the future
 */
-void  __attribute__((always_inline)) os_setup_thread_zero(void){
+inline void os_setup_thread_zero(void){
   // fill thread 0, which is always THREAD_running
   // system_threads[0] = new thread_t();
-  system_threads[0].flags = THREAD_RUNNING;
-  system_threads[0].ticks = OS_DEFAULT_TICKS;
-  system_threads[0].stack = (uint8_t*)&_estack - DEFAULT_STACK0_SIZE;
+  system_threads[0].flags = THREAD_EMPTY;
+  //system_threads[0].ticks = OS_DEFAULT_TICKS;
+  //system_threads[0].stack = (uint8_t*)&_estack - DEFAULT_STACK0_SIZE;
   system_threads[0].stack_size = DEFAULT_STACK0_SIZE;
   thread_count++;
 }
@@ -1053,7 +1054,7 @@ void threads_init(void){
   current_tick_count = OS_DEFAULT_TICKS;
   current_active_state = OS_FIRST_RUN;
 
-  os_add_thread(&remainder_thread, NULL, remainder_thread_stack_space, remainder_thread_stack);
+  os_add_thread(&remainder_thread, NULL, 0, remainder_thread_stack_space, remainder_thread_stack);
 }
 
 /*!
@@ -1088,7 +1089,7 @@ int os_stop(void) {
   current_active_state = OS_STOPPED;
   __enable_irq();
   return old_state;
-}
+} 
 
 /*!
 *   @brief Increments to next thread for context switching
@@ -1105,70 +1106,36 @@ inline void os_get_next_thread() {
   // allow an extra 8 bytes for a call to the ISR and one additional call or variable
   if (current_thread_id && ((uint8_t*)current_thread->sp - current_thread->stack <= 8)) 
     stack_overflow_isr();
+
+  static PriorityQueueNaiveNode *current_node; 
   
-  bool sitting = false; 
-
-  // Basic non prioritized threading
-  /*
-  while(1) {
-    current_thread_id++;
-    if(sitting){
-      current_thread_id = 1; 
-      break; 
-    }
-
-    if (current_thread_id >= MAX_THREADS | current_thread_id > thread_count){
-      current_thread_id = 2; // thread 0 is MSP; always active so return
-      sitting = true; 
-    }
-
-    if(system_threads[current_thread_id].flags == THREAD_RUNNING)
-      break; 
-
-    // If a thread is sleeping. 
-    else if(system_threads[current_thread_id].flags == THREAD_SLEEPING){
-      // And it's time to wake up the thread. 
-      if(system_threads[current_thread_id].next_run_ms <= millis()){
-        system_threads[current_thread_id].flags = THREAD_RUNNING; 
-        break; 
-      }
-    }
-  }
-
-  current_tick_count = system_threads[current_thread_id].ticks;
-  current_thread = &system_threads[current_thread_id];
-  current_save = &system_threads[current_thread_id].save;
-  current_msp = (current_thread_id==0?1:0);
-  current_sp = system_threads[current_thread_id].sp;
-*/
-
-  // The head thread is actually our remainder time thread, so it's the last thing we check
-  PriorityQueueNaiveNode *head_node = thread_priorities.peek_top_node(); 
-  
-  // The first thread is the next thread. 
-  PriorityQueueNaiveNode *current_node = head_node->next; 
-
-  // The thread we are using. 
+  // Whichever thread we want to use.
   thread_t *thread; 
+
+  // We look at the highest priority node first
+  current_node = thread_priorities.peek_top_node();
+
+  // Iterate through until we have a thread we need to pick up
   while(1){
     // Casting general pointer as a thread pointer
     thread = (thread_t*)current_node->ptr; 
 
-
-    // If we reach the end and there are no more threads, then we go into the remainder thread. 
-    if(thread == NULL){
-      thread = (thread_t*)head_node->ptr; 
-      break; 
-    }
-
+    // If the thread has been sleeping, and it's time to wake it up
+    if(thread->flags == THREAD_SLEEPING && thread->next_run_ms <= millis())
+        thread->flags = THREAD_RUNNING; // We wake up the thread. 
 
     // The highest priority thread runs first!
     if(thread->flags == THREAD_RUNNING)
       break; 
-      
+    
     current_node = current_node->next; 
   } 
 
+  // So the astute may realize here, that there's no termination code. 
+  // The reason is because the lowest priority thread is the remainder thread, and that thread does literally nothing but exit out 
+  // And check for something that's ready again
+ 
+  // Load up all the important registers from memory back into the operating system.
   current_tick_count = thread->ticks; 
   current_thread = thread; 
   current_save = &(thread->save); 
@@ -1270,8 +1237,10 @@ os_thread_id_t os_add_thread(thread_func_t p, void * arg, uint8_t thread_priorit
       tp->save.lr = 0xFFFFFFF9;
       current_active_state = old_state;
       thread_count++;
-      // How important is this thread?
-      tp->thread_priority = thread_priority; 
+      
+      // How important is this thread? 
+      // Note that since we put that in the priority thread, 
+      // tp->thread_priority = thread_priority; 
       
       // If the operating system was started before, we restart the OS
       if (old_state == OS_STARTED || old_state == OS_FIRST_RUN) 
@@ -1377,6 +1346,13 @@ thread_state_t os_get_thread_state(os_thread_id_t target_thread_id){
 */
 os_thread_id_t os_current_id(void){
   return current_thread_id; 
+}
+
+/*!
+* @return Current pointer to thread information
+*/
+thread_t *_os_current_thread(void){
+  return current_thread; 
 }
 
 /*!

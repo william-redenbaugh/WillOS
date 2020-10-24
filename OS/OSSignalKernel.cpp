@@ -8,6 +8,16 @@
 */
 void OSSignal::signal(thread_signal_t thread_signal){
     this->bits |= (1 << (uint32_t)thread_signal);
+
+    // Turn of OS so we can play with the threads. 
+    int os_state = os_stop(); 
+    for(int n = 0; n < this->current_thread_count; n++)
+        this->thread_signal_arr[n]->flags = THREAD_RUNNING; 
+    // Reboot OS after mission critical stuff has been taken care of
+    os_start(os_state); 
+
+    // Since we have no more threads that are waiting on this signal 
+    this->current_thread_count = 0; 
 }
 
 /*!
@@ -30,7 +40,6 @@ bool OSSignal::check(thread_signal_t thread_signal){
 }
 
 
-
 /*!
 *   @brief Checks to see if a bit is cleared or set
 *   @param thread_signal_t which bit we want to check
@@ -42,18 +51,33 @@ bool OSSignal::wait(thread_signal_t thread_signal, uint32_t timeout_ms){
     if(OS_CHECK_BIT(this->bits, (uint32_t)thread_signal))
         return true; 
 
-    // Starting system tick
-    uint32_t start = millis();
+    // Stop the operating system so we can make changes to the thread. 
+    int os_state = os_stop(); 
 
-    while(1){
-        if(OS_CHECK_BIT(this->bits, (uint32_t)thread_signal))
-            return true; 
+    thread_t *current_thread = _os_current_thread(); 
+    this->thread_signal_arr[this->current_thread_count] = current_thread; 
+    
+    // Set thread to sleeping. 
+    current_thread->flags = THREAD_SLEEPING; 
 
-        if(timeout_ms && (millis() - start > timeout_ms))
-            return false;
+    // Set next time thread should wake up anyway. 
+    current_thread->next_run_ms = millis() + timeout_ms; 
 
-        _os_yield();   
-    }
+    // We added another thread to the thread queue
+    this->current_thread_count++; 
+    
+    // Restart the OS after we have completed touching the thread. 
+    os_start(os_state); 
+
+    // Context switch out of the thread. 
+    _os_yield(); 
+
+    // If were able to get access to the signal
+    if(OS_CHECK_BIT(this->bits, (uint32_t)thread_signal))
+        return true; 
+
+    // Otherwise we weren't able to
+    return false; 
 }
 
 /*!
@@ -63,27 +87,14 @@ bool OSSignal::wait(thread_signal_t thread_signal, uint32_t timeout_ms){
 *   @returns whether or or not we we able to get set bits or not
 */
 bool OSSignal::wait_n_clear(thread_signal_t thread_signal, uint32_t timeout_ms){
-    
-    // Checking case immediatly. 
-    if(OS_CHECK_BIT(this->bits, (uint32_t)thread_signal)){
+    // We waited, and eventually the signal worked out for us 
+    if(this->wait(thread_signal, timeout_ms)){
         this->clear(thread_signal);
-        return true; 
+        return true;
     }
 
-    // Starting system tick
-    uint32_t start = millis();
-
-    while(1){
-        if(OS_CHECK_BIT(this->bits, (uint32_t)thread_signal)){
-            this->clear(thread_signal);
-            return true;  
-        }
-            
-        if(timeout_ms && (millis() - start > timeout_ms))
-            return false;
-
-        _os_yield();   
-    }
+    // Weren't able to what we wanted. 
+    return false; 
 }
 
 /*!
@@ -91,12 +102,27 @@ bool OSSignal::wait_n_clear(thread_signal_t thread_signal, uint32_t timeout_ms){
 *   @param thread_signal_t thread_signal to be sete
 */
 void OSSignal::wait_notimeout(thread_signal_t thread_signal){
-    while(1){
-        if(OS_CHECK_BIT(this->bits, (uint32_t)thread_signal))
-            return; 
+    // Checking case immediatly. 
+    if(OS_CHECK_BIT(this->bits, (uint32_t)thread_signal))
+        return;
 
-        _os_yield();   
-    }   
+    // Stop the operating system so we can make changes to the thread. 
+    int os_state = os_stop(); 
+
+    thread_t *current_thread = _os_current_thread(); 
+    this->thread_signal_arr[this->current_thread_count] = current_thread; 
+    
+    // Set thread to suspended. The thread will not run until someone else wakes it up
+    current_thread->flags = THREAD_SUSPENDED; 
+
+    // We added another thread to the thread queue
+    this->current_thread_count++; 
+
+    // Restart the OS after we have completed touching the thread. 
+    os_start(os_state); 
+
+    // Context switch out of the thread. 
+    _os_yield(); 
 }
 
 /*!
