@@ -1060,6 +1060,7 @@ void threads_init(void){
 /*!
 *   @brief Starts the entire Will-OS Kernel
 *   @note Try to avoid stopping the kernel whenever possible. 
+*   @note Most important when you have a preemptive kernel, as it enables interrupt actions
 *   @param none
 *   @returns int original state of machine
 */
@@ -1080,6 +1081,7 @@ int os_start(int prev_state){
 /*!
 *   @brief Stops the entire Will-OS Kernel
 *   @note Try to avoid stopping the kernel for as short of operations as possible 
+*   @note Most important when you have a premptive kernel, as it disables interrupt actions.
 *   @param none
 *   @returns int original state of machine
 */
@@ -1128,6 +1130,7 @@ inline void os_get_next_thread() {
     if(thread->flags == THREAD_RUNNING)
       break; 
     
+    // If nothing works out, we move on to the next thread. 
     current_node = current_node->next; 
   } 
 
@@ -1240,7 +1243,7 @@ os_thread_id_t os_add_thread(thread_func_t p, void * arg, uint8_t thread_priorit
       
       // How important is this thread? 
       // Note that since we put that in the priority thread, 
-      // tp->thread_priority = thread_priority; 
+      tp->thread_priority = thread_priority; 
       
       // If the operating system was started before, we restart the OS
       if (old_state == OS_STARTED || old_state == OS_FIRST_RUN) 

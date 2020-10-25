@@ -199,8 +199,8 @@ typedef struct{
   // Flags to set or clear signals to a thread. 
   volatile uint32_t thread_set_flags = 0x0000;
 
-  // Thread priority(Redundant/depricated)
-  // uint8_t thread_priority; 
+  // Thread priority
+  uint8_t thread_priority; 
 
   // Next time the thread will run (in milliseconds)
   uint32_t next_run_ms; 

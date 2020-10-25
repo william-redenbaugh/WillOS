@@ -54,7 +54,10 @@ bool OSSignal::wait(thread_signal_t thread_signal, uint32_t timeout_ms){
     // Stop the operating system so we can make changes to the thread. 
     int os_state = os_stop(); 
 
-    thread_t *current_thread = _os_current_thread(); 
+    // What is the thread ID of the current thread. 
+    thread_t *current_thread = _os_current_thread();
+
+    // Add it to our array of threads.  
     this->thread_signal_arr[this->current_thread_count] = current_thread; 
     
     // Set thread to sleeping. 
@@ -65,9 +68,13 @@ bool OSSignal::wait(thread_signal_t thread_signal, uint32_t timeout_ms){
 
     // We added another thread to the thread queue
     this->current_thread_count++; 
-    
+
+    // Cleans out future pipeline actions. Most relevant for M7 based CPUs
+    __flush_cpu_pipeline(); 
+
     // Restart the OS after we have completed touching the thread. 
     os_start(os_state); 
+
 
     // Context switch out of the thread. 
     _os_yield(); 
@@ -109,7 +116,10 @@ void OSSignal::wait_notimeout(thread_signal_t thread_signal){
     // Stop the operating system so we can make changes to the thread. 
     int os_state = os_stop(); 
 
+    // Getting the current thread id. 
     thread_t *current_thread = _os_current_thread(); 
+
+    // Setting the thread signal to the current thread. 
     this->thread_signal_arr[this->current_thread_count] = current_thread; 
     
     // Set thread to suspended. The thread will not run until someone else wakes it up
@@ -118,10 +128,13 @@ void OSSignal::wait_notimeout(thread_signal_t thread_signal){
     // We added another thread to the thread queue
     this->current_thread_count++; 
 
+    // Cleans out future pipeline actions. Most relevant for M7 based CPUs
+    __flush_cpu_pipeline(); 
+
     // Restart the OS after we have completed touching the thread. 
     os_start(os_state); 
 
-    // Context switch out of the thread. 
+    // Context switch out of the thread. Whatever happens happens. 
     _os_yield(); 
 }
 

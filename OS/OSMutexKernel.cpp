@@ -3,7 +3,7 @@
 
 /*
 Author: William Redenbaugh, Fernando Trias
-Last Edit Date: 8/9/2020
+Last Edit Date: 10/24/2020
 */
 
 /*!
@@ -23,30 +23,48 @@ MutexLockState_t MutexLock::getState(void){
 * @returns MutexLockReturnStatus or whether or not we were able to get the mutex
 */
 MutexLockReturnStatus __attribute__ ((noinline)) MutexLock::lock(uint32_t timeout_ms){
-  if(this->tryLock())
+  // Stop the kernel for mission critical stuff. 
+  int os_state = os_stop(); 
+
+  // If the lock in unlocked, then we acquire it before we context switch just in case, to prevent any delays
+  if(this->state == MUTEX_UNLOCKED){
+    // Let's acquire it!
+    this->state = MUTEX_LOCKED;
+    // We are done dealing with OS specific commands
+    os_start(os_state);
+    // We gottem
     return MUTEX_ACQUIRE_SUCESS;
-  
-  uint32_t start = millis();
-
-  while(1){
-    // If we can acquire the lock!
-    if(this->tryLock())
-      return MUTEX_ACQUIRE_SUCESS; 
-
-    // If we can't acquire the lock :(
-    if(timeout_ms && (millis() - start > timeout_ms))
-      break;
-
-    // Reqlinquise this thread to someone else
-    _os_yield();
-
   }
+  
+  // Otherwise we sleep the thread: 
+  thread_t *current_thread = _os_current_thread(); 
+  
+  // When will the thread run next if it isn't premepted yet
+  current_thread->next_run_ms = millis() + timeout_ms; 
 
-  // If we can't get the mutex, we clear out the cpu pipeline, and ensure all memory fetches have completed. 
-  __flush_cpu_pipeline();
+  // Set thread flags to sleeping. 
+  current_thread->flags = THREAD_SLEEPING; 
 
-  // Let the managing thread know that we failed. 
-  return MUTEX_ACQUIRE_FAIL;
+  // Taking care of thread stuff
+  thread_list.insert((void*)current_thread, current_thread->thread_priority);
+
+  // reboot the OS kernel. 
+  os_start(os_state); 
+
+  // Context switch out of the thread. 
+  _os_yield(); 
+
+  // Stop the OS again when checking mutex stuff
+  os_state = os_stop();
+  // If the lock in unlocked, then we acquire it.
+  if(this->state == MUTEX_UNLOCKED){
+    // Let's acquire it!
+    this->state = MUTEX_LOCKED;
+    // We are done dealing with OS specific commands
+    os_start(os_state);
+    // We gottem
+    return MUTEX_ACQUIRE_SUCESS;
+  } 
 }
 
 /*!
@@ -56,7 +74,7 @@ MutexLockReturnStatus __attribute__ ((noinline)) MutexLock::lock(uint32_t timeou
 MutexLockReturnStatus MutexLock::tryLock(void){
   // Current state of the operating system. 
   int os_state = os_stop();
-  
+
   // If the lock in unlocked, then we acquire it.
   if(this->state == MUTEX_UNLOCKED){
     // Let's acquire it!
@@ -77,17 +95,45 @@ MutexLockReturnStatus MutexLock::tryLock(void){
 * @brief Waits for the lock indefinitely
 */
 void __attribute__ ((noinline)) MutexLock::lockWaitIndefinite(void){
-  if(this->tryLock())
-    return;
-  
-  while(1){
-    // If we can acquire the lock!
-    if(this->tryLock())
-      return; 
+  // Stop the kernel for mission critical stuff. 
+  int os_state = os_stop(); 
 
-    // Reqlinquise this thread to someone else
-    _os_yield();
+  // If the lock in unlocked, then we acquire it before we context switch just in case, to prevent any delays
+  if(this->state == MUTEX_UNLOCKED){
+    // Let's acquire it!
+    this->state = MUTEX_LOCKED;
+    // We are done dealing with OS specific commands
+    os_start(os_state);
+    // We gottem
+    return; 
   }
+  
+  // Otherwise we sleep the thread: 
+  thread_t *current_thread = _os_current_thread(); 
+
+  // Set thread flags to sleeping. 
+  current_thread->flags = THREAD_SLEEPING; 
+
+  // Taking care of thread stuff
+  thread_list.insert((void*)current_thread, current_thread->thread_priority);
+
+  // reboot the OS kernel. 
+  os_start(os_state); 
+
+  // Context switch out of the thread. 
+  _os_yield(); 
+
+  // Stop the OS again when checking mutex stuff
+  os_state = os_stop();
+  // If the lock in unlocked, then we acquire it.
+  if(this->state == MUTEX_UNLOCKED){
+    // Let's acquire it!
+    this->state = MUTEX_LOCKED;
+    // We are done dealing with OS specific commands
+    os_start(os_state);
+    // We gottem
+    return; 
+  } 
 }
 
 /*!
@@ -95,10 +141,18 @@ void __attribute__ ((noinline)) MutexLock::lockWaitIndefinite(void){
 */
 void __attribute__ ((noinline)) MutexLock::unlock(void){
   int os_state = os_stop();
-  
-  if(this->state == MUTEX_LOCKED)
-    this->state = MUTEX_UNLOCKED;
+  // Mutex is set to unlocked flag. 
+  this->state = MUTEX_UNLOCKED;
 
+  // If we have any threads waiting on the mutex. 
+  if(thread_list.num_elemnts() != 0){
+    // We get the highest priority thread first. 
+    thread_t *next_thread = (thread_t*)thread_list.pop(); 
+
+    // And we wake it up. 
+    next_thread->flags = THREAD_RUNNING; 
+  }
+  
   __flush_cpu_pipeline();
   os_start(os_state);
 } 
