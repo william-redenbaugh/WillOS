@@ -112,7 +112,7 @@ void __attribute__ ((noinline)) MutexLock::lockWaitIndefinite(void){
   thread_t *current_thread = _os_current_thread(); 
 
   // Set thread flags to sleeping. 
-  current_thread->flags = THREAD_SLEEPING; 
+  current_thread->flags = THREAD_SUSPENDED; 
 
   // Taking care of thread stuff
   thread_list.insert((void*)current_thread, current_thread->thread_priority);
