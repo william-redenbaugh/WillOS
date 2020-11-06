@@ -33,42 +33,23 @@
 
 #include "OSThreadKernel.h"
 
-#if defined(__IMXRT1062__)
+/*!
+* @brief Function Declarations
+*/
+void os_del_process(void);
+void *os_loadstack(thread_func_t p, void * arg, void *stackaddr, int stack_size);
 
 /*!
 *   @brief Current thread that we have context of.
 *   @note This was contained in TeensyThreads' Thread class as current_thread
 */
-os_thread_id_t current_thread_id = 0 ;
+os_thread_id_t current_thread_id = 0;
 
 /*!
 *   @brief Keeps track of how many threads we have at the moment
 *   @note This was contained in TeensyThreads' Thread class as thread_count
 */
 int thread_count = 0;
-
-/*!
-* @brief The default stack size of a thread being generated on the OS
-* @note Can be defined as a preprocessor command
-*/
-#ifndef EXTERN_OS_DEFAULT_STACK_SIZE
-int OS_DEFAULT_STACK_SIZE = 4092;
-#else 
-int OS_DEFAULT_STACK_SIZE = EXTERN_OS_DEFAULT_STACK_SIZE;
-#endif 
-
-#ifndef EXTERN_OS_DEFAULT_TICKS
-int OS_DEFAULT_TICKS = 10;
-#else 
-int OS_DEFAULT_TICKS = EXTERN_OS_DEFAULT_TICKS;
-#endif 
-
-extern volatile uint32_t systick_millis_count;
-
-//ADDED, per task sleep time info
-struct scheduler_info{
-  volatile int sleep_time_till_end_tick;
-} task_info[MAX_THREADS];
 
 /*!
   * @brief Pointer array to all the available system threads
@@ -80,6 +61,7 @@ struct scheduler_info{
   * But in the future, a linked list might be more appropriate.
 */
 thread_t system_threads[MAX_THREADS];
+
 
 // These variables are used by the assembly context_switch() function.
 // They are copies or pointers to data in Threads and thread_t
@@ -127,13 +109,37 @@ int current_msp;
 *   @note in TeensyThreads this was currentSP
 */
 void *current_sp;
-  
+
+/*
+* Store the PIT timer flag register for use in assembly
+*/
+volatile uint32_t *context_timer_flag;
+
 }
 
 /*!
 * @brief Main Thread zero stack. 
 */
 extern unsigned long _estack;   // the main thread 0 stack
+
+
+#if defined(__IMXRT1062__)
+
+/*!
+* @brief The default stack size of a thread being generated on the OS
+* @note Can be defined as a preprocessor command
+*/
+#ifndef EXTERN_OS_DEFAULT_STACK_SIZE
+int OS_DEFAULT_STACK_SIZE = 4092;
+#else 
+int OS_DEFAULT_STACK_SIZE = EXTERN_OS_DEFAULT_STACK_SIZE;
+#endif 
+
+#ifndef EXTERN_OS_DEFAULT_TICKS
+int OS_DEFAULT_TICKS = 10;
+#else 
+int OS_DEFAULT_TICKS = EXTERN_OS_DEFAULT_TICKS;
+#endif 
 
 /*!
 *   @brief interrupt service routine that deals with saving the system tick
@@ -145,25 +151,10 @@ os_isr_function_t save_systick_isr;
 */
 os_isr_function_t save_svcall_isr;
 
-/*
- * Store the PIT timer flag register for use in assembly
- */
-volatile uint32_t *context_timer_flag;
-
 /*!
 * @brief ISR that we can use later!
 */
 extern "C" void unused_interrupt_vector(void);
-
-/*!
-*   @brief subroutine called from assembly code to load next thread's context and registers
-*   @note Only to be used in assembly context switching code. Was loadNextThread in TeensyThreads 
-*   @param none
-*   @returns none
-*/
-extern "C" void load_next_thread_asm() {
-  os_get_next_thread();
-}
 
 /*!
 * @brief ISR that triggers when we overflow our stack, our thread ends. 
@@ -310,32 +301,6 @@ bool t4_gpt_init(unsigned int microseconds){
 }
 
 /*!
-*   @brief allows our program to "yield" out of current subroutine
-*   @note 
-*/
-extern "C" void _os_yield(void){
-    __asm volatile("svc %0" : : "i"(WILL_OS_SVC_NUM));
-}
-
-/*!
-* @brief Sleeps the thread through a hypervisor call. 
-* @note Checks in roughly every milliscond until thread is ready to start THREAD_running again
-* @param int milliseconds since last system tick
-* @returns none
-*/
-extern void os_thread_delay_ms(int millisecond){
-  int start_del = millis();
-
-  // So the operating system knows when to start back up the next thread. 
-  current_thread->next_run_ms = start_del + millisecond;  
-
-  while(current_thread->next_run_ms > millis()){
-    // Yields to operating system call
-   _os_yield();
-  }
-}
-
-/*!
 * @brief Sets up our zero thread. 
 * @note only to be called at setup
 */
@@ -388,40 +353,6 @@ void threads_init(void){
 }
 
 /*!
-*   @brief Starts the entire Will-OS Kernel
-*   @note Try to avoid stopping the kernel whenever possible. 
-*   @param none
-*   @returns int original state of machine
-*/
-int os_start(int prev_state){
-  __disable_irq();
-  
-  int old_state = current_active_state;
-  
-  if (prev_state == -1) 
-    prev_state = OS_STARTED;
-
-  current_active_state = prev_state;
-  __enable_irq();
-  
-  return old_state;
-}
-
-/*!
-*   @brief Stops the entire Will-OS Kernel
-*   @note Try to avoid stopping the kernel whenever possible. 
-*   @param none
-*   @returns int original state of machine
-*/
-int os_stop(void) {
-  __disable_irq();
-  int old_state = current_active_state;
-  current_active_state = OS_STOPPED;
-  __enable_irq();
-  return old_state;
-}
-
-/*!
 *   @brief Increments to next thread for context switching
 *   @note Not to be called externally!
 *   @param  none
@@ -453,56 +384,6 @@ inline void os_get_next_thread() {
   current_save = &system_threads[current_thread_id].save;
   current_msp = (current_thread_id==0?1:0);
   current_sp = system_threads[current_thread_id].sp;
-}
-
-/*!
-*   @brief  deletes a thread from the system. 
-*   @note  be careful, since this also ends the system kernel and isr's
-*   @param none
-*   @return none
-*/
-void os_del_process(void){
-  // Stopping the Will-OS system
-  int old_state = os_stop();
-
-  // Pointer to the thread we are using.
-  thread_t *me = &system_threads[current_thread_id];
-
-  thread_count--;
-
-  // Setting our current thread to an "ended" state
-  me->flags = THREAD_ENDED; 
-
-  // Restart the will-os kernel 
-  os_start(old_state);
-
-  // Just keep sitting until context change has been called by ISR again. 
-  while(1); 
-}
-
-/*!
-*   @brief Given a thread pointer, arguements towards thread pointer, stack address to thread pointer, and stack size, we can setup the isr interrupts for thread. 
-*   @note Called whenever we add another thread. 
-*   @param will_os_thread_func_t thread pointer to program counter start of thread
-*   @param void *arg address pointer of arguements to pass into will-os
-*   @param void *stack_addr pointer to the begining of the stack address. 
-*   @param int stack_size size of the stack for this thread
-*   @returns pointer to the new threadstack. 
-*/
-void *os_loadstack(thread_func_t p, void * arg, void *stackaddr, int stack_size){
-
-  interrupt_stack_t * process_frame = (interrupt_stack_t *)((uint8_t*)stackaddr + stack_size - sizeof(interrupt_stack_t) - 8);
-  // Clearing up and setting all the registers.
-  process_frame->r0 = (uint32_t)arg;
-  process_frame->r1 = 0;
-  process_frame->r2 = 0;
-  process_frame->r3 = 0;
-  process_frame->r12 = 0;
-  process_frame->lr = (uint32_t)os_del_process;
-  process_frame->pc = ((uint32_t)p);
-  process_frame->xpsr = 0x1000000;
-  uint8_t *ret = (uint8_t*)process_frame;
-  return (void*)ret;
 }
 
 /*!
@@ -567,17 +448,6 @@ os_thread_id_t os_add_thread(thread_func_t p, void * arg, uint8_t thread_priorit
 }
 
 /*!
-* @brief Adds a thread to Will-OS Kernel
-* @note Paralelism at it's finest!
-* @param will_os_thread_func_t thread(pointer to thread function call begining of program counter)
-* @param void *arg(pointer arguement to parameters for thread)
-* @param void *stack(pointer to begining of thread stack)
-* @param int stack_size(size of the allocated threadstack)
-* @returns none
-*/
-os_thread_id_t os_add_thread(thread_func_t p, void * arg, int stack_size, void *stack){return os_add_thread(p, arg, 128, stack_size, stack);}
-
-/*!
 *   @brief Allows us to change the Will-OS System tick. 
 *   @note If you want more precision in your system ticks, take care of this here. 
 *   @param int tick_microseconds
@@ -587,187 +457,6 @@ bool os_set_microsecond_timer(int tick_microseconds){
   return t4_gpt_init(tick_microseconds);
 }
 
-/*!
-* @brief Sets the state of a thread to suspended. 
-* @brief If thread doesn't exist, then 
-* @param Which thread are we trying to get our state for
-* @returns os_thread_id_t
-*/
-os_thread_id_t os_suspend_thread(os_thread_id_t target_thread_id){
-  if(target_thread_id < thread_count){
-    system_threads[target_thread_id].flags = THREAD_SUSPENDED;   
-    return target_thread_id;
-  }
-  // Otherwise tell system that thread doesn't exist. 
-  return THREAD_DNE;  
-}
-
-/*!
-* @brief Sets the state of a thread to resumed. 
-* @brief If thread doesn't exist or hasn't been run before, then 
-* @param Which thread are we trying to get our state for
-* @returns os_thread_id_t
-*/
-os_thread_id_t os_resume_thread(os_thread_id_t target_thread_id){
-  if(target_thread_id < thread_count){
-    system_threads[target_thread_id].flags = THREAD_RUNNING;   
-    return target_thread_id; 
-  }
-  // Otherwise tell system that thread doesn't exist. 
-  return THREAD_DNE;  
-}
-
-/*!
-* @brief Sets the state of a thread to be killed 
-* @brief If thread doesn't exist or hasn't been run before, then
-* @note One of the biggest limitations of this atm, is that we don't deallocate the thread stack space until we create another thread. 
-* @note in the future we should work on this 
-* @note Meaning  
-* @param Which thread are we trying to get our state for
-* @returns os_thread_id_t
-*/
-os_thread_id_t os_kill_thread(os_thread_id_t target_thread_id){
-  if(target_thread_id < thread_count)
-    system_threads[target_thread_id].flags = THREAD_ENDED;   
-  // Otherwise tell system that thread doesn't exist. 
-  return THREAD_DNE;  
-}
-
-/*!
-* @brief Gets the state of a thread. 
-* @brief If thread doesn't exist, then 
-* @param Which thread are we trying to get our state for
-* @returns os_thread_id_t
-*/
-thread_state_t os_get_thread_state(os_thread_id_t target_thread_id){
-  if(target_thread_id < thread_count)
-    return system_threads[target_thread_id].flags;
-  return THREAD_DNE;
-}
-
-/*!
-* @returns The current thread's ID. 
-*/
-os_thread_id_t os_current_id(void){
-  return current_thread_id; 
-}
-
-/*!
-* @returns the current remaining stack left for a thread, based off their ID. 
-*/
-int os_get_stack_used(os_thread_id_t target_thread_id){
-  if(target_thread_id < thread_count)
-    return system_threads[target_thread_id].stack + system_threads[target_thread_id].stack_size - (uint8_t*)system_threads[target_thread_id].sp;
-  return -1; 
-}
-
-/*!
-* @brief Allows us to send signals to each thread by setting a bitmask
-* @note This uses preset flags to allow us to set and clear clags in a thread
-* @param thread_signal_t thread_signal(there are 32 thread signals per thread)
-*/
-void os_thread_signal(thread_signal_t thread_signal){
-  system_threads[current_thread_id].thread_set_flags |= (1 << (uint32_t)thread_signal); 
-}
-
-/*!
-* @brief Allows us to send signals to each thread by clearing a bitmask
-* @note This uses preset flags to allow us to set and clear clags in a thread
-* @param thread_signal_t thread_signal(there are 32 thread signals per thread)
-*/
-void os_thread_clear(thread_signal_t thread_signal){
-  system_threads[current_thread_id].thread_set_flags &= ~(1 << (uint32_t)thread_signal);
-}
-
-/*!
-* @brief Allows us to send signals to each thread by setting a bitmask
-* @note This uses preset flags to allow us to set and clear clags in a thread
-* @param thread_signal_t thread_signal(there are 32 thread signals per thread)
-* @param os_thread_id_t target_thread_id which thread we want to signal
-*/
-bool os_signal_thread(thread_signal_t thread_signal, os_thread_id_t target_thread_id){
-  if(target_thread_id < thread_count){
-    system_threads[target_thread_id].thread_set_flags |= (1 << (uint32_t)thread_signal); 
-    return true; 
-  }
-
-
-  return false; 
-}
-
-/*!
-* @brief Allows us to send signals to each thread by clearing a bitmask
-* @note This uses preset flags to allow us to set and clear clags in a thread
-* @param thread_signal_t thread_signal(there are 32 thread signals per thread)
-* @param os_thread_id_t target_thread_id in which we want to clear flags
-*/
-bool os_signal_thread_clear(thread_signal_t thread_signal, os_thread_id_t target_thread_id){
-  if(target_thread_id < thread_count){
-    system_threads[target_thread_id].thread_set_flags &= ~(1 << (uint32_t)thread_signal);
-    return true; 
-  }
-  return false; 
-}
-
-/*!
-* @brief We can check if there are bits that are signaled
-* @param thread_signal which bits we want to check,
-* @param target_thread_id which thread we 
-* @return if those bits are set or not
-*/  
-thread_signal_status_t os_checkbits_thread(thread_signal_t thread_signal, os_thread_id_t target_thread_id){
-  if(target_thread_id < thread_count){
-    if(OS_CHECK_BIT(system_threads[target_thread_id].thread_set_flags, (uint32_t)thread_signal))
-      return THREAD_SIGNAL_SET; 
-    return THREAD_SIGNAL_CLEAR; 
-  }
-  return THREAD_SIGNAL_DNE;
-}
-
-/*!
-* @brief We can check if there are bits that are signaled
-* @param which bits we want to check,
-* @return if those bits are set or not
-*/  
-thread_signal_status_t os_thread_checkbits(thread_signal_t thread_signal){
-  if(OS_CHECK_BIT(system_threads[current_thread_id].thread_set_flags, (uint32_t)thread_signal))
-      return THREAD_SIGNAL_SET; 
-    return THREAD_SIGNAL_CLEAR; 
-}
-
-/*!
-* @brief Hangs thread until either timeout or until thread signal bits have been set
-* @note Best not to 
-*
-*/
-thread_signal_status_t os_thread_waitbits(thread_signal_t thread_signal, uint32_t timeout_ms){
-  if(os_thread_checkbits(thread_signal) == THREAD_SIGNAL_SET)
-    return THREAD_SIGNAL_SET; 
-
-  uint32_t start = millis();
-  
-  while(1){
-    if(os_thread_checkbits(thread_signal) == THREAD_SIGNAL_SET)
-      return THREAD_SIGNAL_SET;
-  
-    if(timeout_ms && (millis() - start > timeout_ms))
-      return THREAD_SIGNAL_TIMEOUT;
-  
-    _os_yield();
-  }
-}
-
-/*!
-* @brief Hangs thread until signal has been cleared, no timeout
-* @param thread_signal_t thread_signal
-*/
-void os_thread_waitbits_notimeout(thread_signal_t thread_signal){
-  while(1){
-    if(os_thread_checkbits(thread_signal) == THREAD_SIGNAL_SET)
-      return; 
-    _os_yield();  
-  }
-}
 
 #elif defined(STM32F407xx) || defined(STM32F767xx)
 
@@ -782,18 +471,6 @@ static void remainder_thread(void *params);
 */
 static const int remainder_thread_stack_space = 256; 
 uint8_t remainder_thread_stack[remainder_thread_stack_space]; 
-
-/*!
-*   @brief Current thread that we have context of.
-*   @note This was contained in TeensyThreads' Thread class as current_thread
-*/
-os_thread_id_t current_thread_id = 0 ;
-
-/*!
-*   @brief Keeps track of how many threads we have at the moment
-*   @note This was contained in TeensyThreads' Thread class as thread_count
-*/
-int thread_count = 0;
 
 /*!
 * @brief The default stack size of a thread being generated on the OS
@@ -811,23 +488,10 @@ int OS_DEFAULT_TICKS = 10;
 int OS_DEFAULT_TICKS = EXTERN_OS_DEFAULT_TICKS;
 #endif 
 
-extern volatile uint32_t systick_millis_count;
-
 //ADDED, per task sleep time info
 struct scheduler_info{
   volatile int sleep_time_till_end_tick;
 } task_info[MAX_THREADS];
-
-/*!
-  * @brief Pointer array to all the available system threads
-  * The maximum number of threads is hard-coded. Alternatively, we could implement
-  * a linked list which would mean using up less memory for a small number of
-  * threads while allowing an unlimited number of possible threads. This would
-  * probably not slow down thread switching too much, but it would introduce
-  * complexity and possibly bugs. So to simplifiy for now, we use an array.
-  * But in the future, a linked list might be more appropriate.
-*/
-static thread_t system_threads[MAX_THREADS];
 
 /*!
 * @brief Thread priority object that allows us to have an organized thread priority 
@@ -884,11 +548,6 @@ extern "C" {
 }
 
 /*!
-* @brief Main Thread zero stack. 
-*/
-extern unsigned long _estack;   // the main thread 0 stack
-
-/*!
 *   @brief interrupt service routine that deals with saving the system tick
 */
 os_isr_function_t save_systick_isr;
@@ -898,25 +557,10 @@ os_isr_function_t save_systick_isr;
 */
 os_isr_function_t save_svcall_isr;
 
-/*
- * Store the PIT timer flag register for use in assembly
- */
-volatile uint32_t *context_timer_flag;
-
 /*!
 * @brief ISR that we can use later!
 */
 extern "C" void unused_interrupt_vector(void);
-
-/*!
-*   @brief subroutine called from assembly code to load next thread's context and registers
-*   @note Only to be used in assembly context switching code. Was loadNextThread in TeensyThreads 
-*   @param none
-*   @returns none
-*/
-extern "C" void load_next_thread_asm() {
-  os_get_next_thread();
-}
 
 /*!
 * @brief ISR that triggers when we overflow our stack, our thread ends. 
@@ -971,16 +615,6 @@ extern "C" void SVC_Handler (void){
 
   __asm volatile("b context_switch_direct");
   __asm volatile("bx lr");
-}
-
-/*!
-*   @brief allows our program to "yield" out of current subroutine
-*   @note 
-*/
-extern "C" void _os_yield(void){
-  
-  //threads_svcall_isr(); 
-  __asm volatile("svc %0" : : "i"(WILL_OS_SVC_NUM));
 }
 
 /*!
@@ -1058,42 +692,6 @@ void threads_init(void){
 }
 
 /*!
-*   @brief Starts the entire Will-OS Kernel
-*   @note Try to avoid stopping the kernel whenever possible. 
-*   @note Most important when you have a preemptive kernel, as it enables interrupt actions
-*   @param none
-*   @returns int original state of machine
-*/
-int os_start(int prev_state){
-  __disable_irq();
-  
-  int old_state = current_active_state;
-  
-  if (prev_state == -1) 
-    prev_state = OS_STARTED;
-
-  current_active_state = prev_state;
-  __enable_irq();
-  
-  return old_state;
-}
-
-/*!
-*   @brief Stops the entire Will-OS Kernel
-*   @note Try to avoid stopping the kernel for as short of operations as possible 
-*   @note Most important when you have a premptive kernel, as it disables interrupt actions.
-*   @param none
-*   @returns int original state of machine
-*/
-int os_stop(void) {
-  __disable_irq();
-  int old_state = current_active_state;
-  current_active_state = OS_STOPPED;
-  __enable_irq();
-  return old_state;
-} 
-
-/*!
 *   @brief Increments to next thread for context switching
 *   @note Not to be called externally!
 *   @param  none
@@ -1144,56 +742,6 @@ inline void os_get_next_thread() {
   current_save = &(thread->save); 
   current_msp = 0; 
   current_sp = thread->sp; 
-}
-
-/*!
-*   @brief  deletes a thread from the system. 
-*   @note  be careful, since this also ends the system kernel and isr's
-*   @param none
-*   @return none
-*/
-void os_del_process(void){
-  // Stopping the Will-OS system
-  int old_state = os_stop();
-
-  // Pointer to the thread we are using.
-  thread_t *me = &system_threads[current_thread_id];
-
-  thread_count--;
-
-  // Setting our current thread to an "ended" state
-  me->flags = THREAD_ENDED; 
-
-  // Restart the will-os kernel 
-  os_start(old_state);
-
-  // Just keep sitting until context change has been called by ISR again. 
-  while(1); 
-}
-
-/*!
-*   @brief Given a thread pointer, arguements towards thread pointer, stack address to thread pointer, and stack size, we can setup the isr interrupts for thread. 
-*   @note Called whenever we add another thread. 
-*   @param will_os_thread_func_t thread pointer to program counter start of thread
-*   @param void *arg address pointer of arguements to pass into will-os
-*   @param void *stack_addr pointer to the begining of the stack address. 
-*   @param int stack_size size of the stack for this thread
-*   @returns pointer to the new threadstack. 
-*/
-void *os_loadstack(thread_func_t p, void * arg, void *stackaddr, int stack_size){
-
-  interrupt_stack_t * process_frame = (interrupt_stack_t *)((uint8_t*)stackaddr + stack_size - sizeof(interrupt_stack_t) - 8);
-  // Clearing up and setting all the registers.
-  process_frame->r0 = (uint32_t)arg;
-  process_frame->r1 = 0;
-  process_frame->r2 = 0;
-  process_frame->r3 = 0;
-  process_frame->r12 = 0;
-  process_frame->lr = (uint32_t)os_del_process;
-  process_frame->pc = ((uint32_t)p);
-  process_frame->xpsr = 0x1000000;
-  uint8_t *ret = (uint8_t*)process_frame;
-  return (void*)ret;
 }
 
 /*!
@@ -1286,6 +834,98 @@ bool os_set_microsecond_timer(int tick_microseconds){
   
 }
 
+#endif
+
+/*!
+* @brief Allows us to send signals to each thread by clearing a bitmask
+* @note This uses preset flags to allow us to set and clear clags in a thread
+* @param thread_signal_t thread_signal(there are 32 thread signals per thread)
+* @param os_thread_id_t target_thread_id in which we want to clear flags
+*/
+bool os_signal_thread_clear(thread_signal_t thread_signal, os_thread_id_t target_thread_id){
+  if(target_thread_id < thread_count){
+    system_threads[target_thread_id].thread_set_flags &= ~(1 << (uint32_t)thread_signal);
+    return true; 
+  }
+  return false; 
+}
+
+/*!
+* @brief Thread that calculates remainder stuff, and sits around 
+* @param void *params
+*/
+static void remainder_thread(void *params){
+  for(;;){
+    _os_yield();
+  } 
+}
+
+/*!
+* @brief Hangs thread until signal has been cleared, no timeout
+* @param thread_signal_t thread_signal
+*/
+void os_thread_waitbits_notimeout(thread_signal_t thread_signal){
+  while(1){
+    if(os_thread_checkbits(thread_signal) == THREAD_SIGNAL_SET)
+      return; 
+    _os_yield();  
+  }
+}
+
+/*!
+* @brief Hangs thread until either timeout or until thread signal bits have been set
+* @note Best not to 
+*/
+thread_signal_status_t os_thread_waitbits(thread_signal_t thread_signal, uint32_t timeout_ms){
+  if(os_thread_checkbits(thread_signal) == THREAD_SIGNAL_SET)
+    return THREAD_SIGNAL_SET; 
+
+  uint32_t start = millis();
+  
+  while(1){
+    if(os_thread_checkbits(thread_signal) == THREAD_SIGNAL_SET)
+      return THREAD_SIGNAL_SET;
+  
+    if(timeout_ms && (millis() - start > timeout_ms))
+      return THREAD_SIGNAL_TIMEOUT;
+  
+    _os_yield();
+  }
+}
+
+/*!
+* @returns The current thread's ID. 
+*/
+os_thread_id_t os_current_id(void){
+  return current_thread_id; 
+}
+
+/*!
+* @brief We can check if there are bits that are signaled
+* @param which bits we want to check,
+* @return if those bits are set or not
+*/  
+thread_signal_status_t os_thread_checkbits(thread_signal_t thread_signal){
+  if(OS_CHECK_BIT(system_threads[current_thread_id].thread_set_flags, (uint32_t)thread_signal))
+      return THREAD_SIGNAL_SET; 
+    return THREAD_SIGNAL_CLEAR; 
+}
+
+/*!
+* @brief We can check if there are bits that are signaled
+* @param thread_signal which bits we want to check,
+* @param target_thread_id which thread we 
+* @return if those bits are set or not
+*/  
+thread_signal_status_t os_checkbits_thread(thread_signal_t thread_signal, os_thread_id_t target_thread_id){
+  if(target_thread_id < thread_count){
+    if(OS_CHECK_BIT(system_threads[target_thread_id].thread_set_flags, (uint32_t)thread_signal))
+      return THREAD_SIGNAL_SET; 
+    return THREAD_SIGNAL_CLEAR; 
+  }
+  return THREAD_SIGNAL_DNE;
+}
+
 /*!
 * @brief Sets the state of a thread to suspended. 
 * @brief If thread doesn't exist, then 
@@ -1345,13 +985,6 @@ thread_state_t os_get_thread_state(os_thread_id_t target_thread_id){
 }
 
 /*!
-* @returns The current thread's ID. 
-*/
-os_thread_id_t os_current_id(void){
-  return current_thread_id; 
-}
-
-/*!
 * @return Current pointer to thread information
 */
 thread_t *_os_current_thread(void){
@@ -1400,86 +1033,135 @@ bool os_signal_thread(thread_signal_t thread_signal, os_thread_id_t target_threa
 }
 
 /*!
-* @brief Allows us to send signals to each thread by clearing a bitmask
-* @note This uses preset flags to allow us to set and clear clags in a thread
-* @param thread_signal_t thread_signal(there are 32 thread signals per thread)
-* @param os_thread_id_t target_thread_id in which we want to clear flags
+*   @brief Starts the entire Will-OS Kernel
+*   @note Try to avoid stopping the kernel whenever possible. 
+*   @note Most important when you have a preemptive kernel, as it enables interrupt actions
+*   @param none
+*   @returns int original state of machine
 */
-bool os_signal_thread_clear(thread_signal_t thread_signal, os_thread_id_t target_thread_id){
-  if(target_thread_id < thread_count){
-    system_threads[target_thread_id].thread_set_flags &= ~(1 << (uint32_t)thread_signal);
-    return true; 
-  }
-  return false; 
-}
-
-/*!
-* @brief We can check if there are bits that are signaled
-* @param thread_signal which bits we want to check,
-* @param target_thread_id which thread we 
-* @return if those bits are set or not
-*/  
-thread_signal_status_t os_checkbits_thread(thread_signal_t thread_signal, os_thread_id_t target_thread_id){
-  if(target_thread_id < thread_count){
-    if(OS_CHECK_BIT(system_threads[target_thread_id].thread_set_flags, (uint32_t)thread_signal))
-      return THREAD_SIGNAL_SET; 
-    return THREAD_SIGNAL_CLEAR; 
-  }
-  return THREAD_SIGNAL_DNE;
-}
-
-/*!
-* @brief We can check if there are bits that are signaled
-* @param which bits we want to check,
-* @return if those bits are set or not
-*/  
-thread_signal_status_t os_thread_checkbits(thread_signal_t thread_signal){
-  if(OS_CHECK_BIT(system_threads[current_thread_id].thread_set_flags, (uint32_t)thread_signal))
-      return THREAD_SIGNAL_SET; 
-    return THREAD_SIGNAL_CLEAR; 
-}
-
-/*!
-* @brief Hangs thread until either timeout or until thread signal bits have been set
-* @note Best not to 
-*
-*/
-thread_signal_status_t os_thread_waitbits(thread_signal_t thread_signal, uint32_t timeout_ms){
-  if(os_thread_checkbits(thread_signal) == THREAD_SIGNAL_SET)
-    return THREAD_SIGNAL_SET; 
-
-  uint32_t start = millis();
+int os_start(int prev_state){
+  __disable_irq();
   
-  while(1){
-    if(os_thread_checkbits(thread_signal) == THREAD_SIGNAL_SET)
-      return THREAD_SIGNAL_SET;
+  int old_state = current_active_state;
   
-    if(timeout_ms && (millis() - start > timeout_ms))
-      return THREAD_SIGNAL_TIMEOUT;
+  if (prev_state == -1) 
+    prev_state = OS_STARTED;
+
+  current_active_state = prev_state;
+  __enable_irq();
   
-    _os_yield();
+  return old_state;
+}
+
+/*!
+*   @brief Stops the entire Will-OS Kernel
+*   @note Try to avoid stopping the kernel for as short of operations as possible 
+*   @note Most important when you have a premptive kernel, as it disables interrupt actions.
+*   @param none
+*   @returns int original state of machine
+*/
+int os_stop(void) {
+  __disable_irq();
+  int old_state = current_active_state;
+  current_active_state = OS_STOPPED;
+  __enable_irq();
+  return old_state;
+} 
+
+
+/*!
+*   @brief  deletes a thread from the system. 
+*   @note  be careful, since this also ends the system kernel and isr's
+*   @param none
+*   @return none
+*/
+void os_del_process(void){
+  // Stopping the Will-OS system
+  int old_state = os_stop();
+
+  // Pointer to the thread we are using.
+  thread_t *me = &system_threads[current_thread_id];
+
+  thread_count--;
+
+  // Setting our current thread to an "ended" state
+  me->flags = THREAD_ENDED; 
+
+  // Restart the will-os kernel 
+  os_start(old_state);
+
+  // Just keep sitting until context change has been called by ISR again. 
+  while(1); 
+}
+
+/*!
+*   @brief Given a thread pointer, arguements towards thread pointer, stack address to thread pointer, and stack size, we can setup the isr interrupts for thread. 
+*   @note Called whenever we add another thread. 
+*   @param will_os_thread_func_t thread pointer to program counter start of thread
+*   @param void *arg address pointer of arguements to pass into will-os
+*   @param void *stack_addr pointer to the begining of the stack address. 
+*   @param int stack_size size of the stack for this thread
+*   @returns pointer to the new threadstack. 
+*/
+void *os_loadstack(thread_func_t p, void * arg, void *stackaddr, int stack_size){
+
+  interrupt_stack_t * process_frame = (interrupt_stack_t *)((uint8_t*)stackaddr + stack_size - sizeof(interrupt_stack_t) - 8);
+  // Clearing up and setting all the registers.
+  process_frame->r0 = (uint32_t)arg;
+  process_frame->r1 = 0;
+  process_frame->r2 = 0;
+  process_frame->r3 = 0;
+  process_frame->r12 = 0;
+  process_frame->lr = (uint32_t)os_del_process;
+  process_frame->pc = ((uint32_t)p);
+  process_frame->xpsr = 0x1000000;
+  uint8_t *ret = (uint8_t*)process_frame;
+  return (void*)ret;
+}
+
+/*!
+* @brief Adds a thread to Will-OS Kernel
+* @note Paralelism at it's finest!
+* @param will_os_thread_func_t thread(pointer to thread function call begining of program counter)
+* @param void *arg(pointer arguement to parameters for thread)
+* @param void *stack(pointer to begining of thread stack)
+* @param int stack_size(size of the allocated threadstack)
+* @returns none
+*/
+os_thread_id_t os_add_thread(thread_func_t p, void * arg, int stack_size, void *stack){return os_add_thread(p, arg, 128, stack_size, stack);}
+
+/*!
+*   @brief subroutine called from assembly code to load next thread's context and registers
+*   @note Only to be used in assembly context switching code. Was loadNextThread in TeensyThreads 
+*   @param none
+*   @returns none
+*/
+extern "C" void load_next_thread_asm() {
+  os_get_next_thread();
+}
+
+/*!
+* @brief Sleeps the thread through a hypervisor call. 
+* @note Checks in roughly every milliscond until thread is ready to start THREAD_running again
+* @param int milliseconds since last system tick
+* @returns none
+*/
+extern void os_thread_delay_ms(int millisecond){
+  int start_del = millis();
+
+  // So the operating system knows when to start back up the next thread. 
+  current_thread->next_run_ms = start_del + millisecond;  
+
+  while(current_thread->next_run_ms > millis()){
+    // Yields to operating system call
+   _os_yield();
   }
 }
 
 /*!
-* @brief Hangs thread until signal has been cleared, no timeout
-* @param thread_signal_t thread_signal
+*   @brief allows our program to "yield" out of current subroutine
+*   @note 
 */
-void os_thread_waitbits_notimeout(thread_signal_t thread_signal){
-  while(1){
-    if(os_thread_checkbits(thread_signal) == THREAD_SIGNAL_SET)
-      return; 
-    _os_yield();  
-  }
+extern "C" void _os_yield(void){
+  __asm volatile("svc %0" : : "i"(WILL_OS_SVC_NUM));
 }
-
-/*!
-* @brief Thread that calculates remainder stuff, and sits around 
-* @param void *params
-*/
-static void remainder_thread(void *params){
-  for(;;){
-    _os_yield();
-  } 
-}
-#endif
