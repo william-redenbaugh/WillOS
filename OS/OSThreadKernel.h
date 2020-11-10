@@ -42,6 +42,11 @@ Last Edit Date: 8/9/2020
 #include "DS_HELPER/fast_malloc.hpp"
 
 /*!
+* @brief Allows us to have priority to our scheduled threads. 
+*/
+#include "DS_HELPER/priority_queue.hpp"
+
+/*!
 * @brief Enumerated State of different operating system states. 
 * @note Used for dealing with different threading purposes. 
 */
@@ -71,7 +76,7 @@ enum thread_state_t{
 *   @note Unless we transition to a linked list(which is unlikely), this will remain the max limit
 */
 #ifndef OS_EXTERN_MAX_THREADS
-static const int MAX_THREADS = 20;
+static const int MAX_THREADS = 24;
 #else
 static const int MAX_THREADS = OS_EXTERN_MAX_THREADS; 
 #endif 
@@ -185,7 +190,7 @@ typedef struct{
   // Flags for dealing with thread 
   volatile thread_state_t flags = THREAD_EMPTY;
   
-  // Where are we in the program so far
+  // Program counter register. 
   void *sp;
 
   // Thread ticks  
@@ -291,11 +296,13 @@ void threads_systick_isr(void);
 */
 extern "C" void _os_yield(void);
 
+#if defined(STM32F407xx) || defined(STM32F767xx)
 /*!
 * @brief Helper function that provides clarity as to how system works.
 * @note This is only during stm32 operations. 
 */
 #define stm32_os_start() _os_yield()
+#endif 
 
 /*!
 * @brief delays the thread through a hypervisor call. 
@@ -416,7 +423,12 @@ int os_start(int prev_state = -1);
 /*!
 * @returns The current thread's ID. 
 */
-os_thread_id_t os_current_id(void);
+os_thread_id_t _os_current_id(void);
+
+/*!
+* @return Current pointer to thread information
+*/
+thread_t *_os_current_thread(void); 
 
 /*!
 * @brief unused ISR routine that we can use for whatever

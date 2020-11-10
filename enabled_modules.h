@@ -66,7 +66,7 @@
 *   @note And reading through it, it's recomended to just use the naive approach if you are gonna add a bunch of elements to a list
 *   @note and read through them often
 */
-//#define PRIORITY_QUEUE_HEAP
+#define PRIORITY_QUEUE_HEAP
 
 /*!
 *   @brief Red Black tree node self balancing tree module
