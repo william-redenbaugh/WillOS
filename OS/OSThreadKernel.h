@@ -203,7 +203,8 @@ typedef struct{
   uint8_t thread_priority; 
 
   // Next time the thread will run (in milliseconds)
-  uint32_t next_run_ms; 
+  uint32_t previous_millis; 
+  uint32_t interval; 
 
 }thread_t;
 

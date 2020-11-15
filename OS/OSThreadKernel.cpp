@@ -332,7 +332,9 @@ extern void os_thread_sleep_ms(int millisecond){
   int start_del = millis();
 
   // So the operating system knows when to start back up the next thread. 
-  current_thread->next_run_ms = start_del + millisecond;  
+  current_thread->interval = millisecond; 
+  current_thread->previous_millis = millis(); 
+
   // Signals that thread is sleeping, and must be awoken once ready. 
   current_thread->flags = THREAD_SLEEPING; 
 
@@ -451,8 +453,8 @@ inline void os_get_next_thread() {
     // Casting general pointer as a thread pointer
     thread = (thread_t*)current_node->ptr; 
 
-    // If the thread has been sleeping, and it's time to wake it up
-    if(thread->flags == THREAD_SLEEPING && thread->next_run_ms <= millis())
+    // If the thread has been sleeping, and it's time to wake it up after the interval
+    if(thread->flags == THREAD_SLEEPING && ((millis() - thread->previous_millis) >= thread->interval))
         thread->flags = THREAD_RUNNING; // We wake up the thread. 
 
     // The highest priority thread runs first!
