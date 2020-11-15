@@ -324,24 +324,6 @@ extern "C" void _os_yield(void){
 
 /*!
 * @brief Sleeps the thread through a hypervisor call. 
-* @note Checks in roughly every milliscond until thread is ready to start THREAD_running again
-* @param int milliseconds since last system tick
-* @returns none
-*/
-extern void os_thread_delay_ms(int millisecond){
-  int start_del = millis();
-
-  // So the operating system knows when to start back up the next thread. 
-  current_thread->next_run_ms = start_del + millisecond;  
-
-  while(current_thread->next_run_ms > millis()){
-    // Yields to operating system call
-   _os_yield();
-  }
-}
-
-/*!
-* @brief Sleeps the thread through a hypervisor call. 
 * @note Sleeps the thread for the alloted time, and wakes up once the thread is ready
 * @param int milliseconds since last system tick
 * @returns none
@@ -398,8 +380,8 @@ void threads_init(void){
   save_svcall_isr = _VectorsRam[11];
   if (save_svcall_isr == unused_interrupt_vector) save_svcall_isr = 0;
   _VectorsRam[11] = SVC_Handler; 
-  current_use_systick = 0; // disable Systick calls
-  t4_gpt_init(200);       // tick every millisecond
+  //current_use_systick = 0; // disable Systick calls
+  //t4_gpt_init(200);       // tick every millisecond
 #endif
   os_add_thread(&remainder_thread, NULL, 0, remainder_thread_stack_space, remainder_thread_stack);
 }

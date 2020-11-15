@@ -95,7 +95,7 @@ void lp_thread_func(void){
         // If there are no threads, then we just chill, sleep the thread for a short while
         // Also serves as a "time remainder thread" for now
         else
-            _os_yield(); 
+            os_thread_sleep_ms(10);
     }
 }
 
