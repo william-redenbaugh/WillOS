@@ -64,7 +64,8 @@ bool OSSignal::wait(thread_signal_t thread_signal, uint32_t timeout_ms){
     current_thread->flags = THREAD_SLEEPING; 
 
     // Set next time thread should wake up anyway. 
-    current_thread->next_run_ms = millis() + timeout_ms; 
+    current_thread->previous_millis = millis(); 
+    current_thread->interval = timeout_ms; 
 
     // We added another thread to the thread queue
     this->current_thread_count++; 

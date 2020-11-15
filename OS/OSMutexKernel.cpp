@@ -40,7 +40,8 @@ MutexLockReturnStatus __attribute__ ((noinline)) MutexLock::lock(uint32_t timeou
   thread_t *current_thread = _os_current_thread(); 
   
   // When will the thread run next if it isn't premepted yet
-  current_thread->next_run_ms = millis() + timeout_ms; 
+  current_thread->previous_millis = millis(); 
+  current_thread->interval = timeout_ms; 
 
   // Set thread flags to sleeping. 
   current_thread->flags = THREAD_SLEEPING; 
