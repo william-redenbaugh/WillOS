@@ -454,7 +454,8 @@ inline void os_get_next_thread() {
     thread = (thread_t*)current_node->ptr; 
 
     // If the thread has been sleeping, and it's time to wake it up after the interval
-    if(thread->flags == THREAD_SLEEPING && ((millis() - thread->previous_millis) >= thread->interval))
+    if(thread->flags == THREAD_SLEEPING)
+      if((millis() - thread->previous_millis) >= thread->interval)
         thread->flags = THREAD_RUNNING; // We wake up the thread. 
 
     // The highest priority thread runs first!
