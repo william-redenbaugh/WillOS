@@ -46,8 +46,19 @@ MutexLockReturnStatus __attribute__ ((noinline)) MutexLock::lock(uint32_t timeou
   // Set thread flags to sleeping. 
   current_thread->flags = THREAD_SLEEPING; 
 
-  // Taking care of thread stuff
-  thread_list.insert((void*)current_thread, current_thread->thread_priority);
+  // Whether or not we want to insert in a new place in the thread list or not. 
+  bool insert = true; 
+  PriorityQueueHeapNode* all_elements = thread_list.all_elements(); 
+  for(int n = 0; n < thread_list.num_elemnts(); n++)
+    // 
+    if(all_elements[n].ptr == (void*) current_thread)
+      insert = false; 
+  
+
+  // If this thread wasn't already saved in the heap, we place it there. 
+  if(insert)
+    // Taking care of thread stuff
+    thread_list.insert((void*)current_thread, current_thread->thread_priority);
 
   // reboot the OS kernel. 
   os_start(os_state); 
@@ -66,6 +77,10 @@ MutexLockReturnStatus __attribute__ ((noinline)) MutexLock::lock(uint32_t timeou
     // We gottem
     return MUTEX_ACQUIRE_SUCESS;
   } 
+  else{
+    os_start(os_state); 
+    return MUTEX_ACQUIRE_FAIL; 
+  }
 }
 
 /*!
@@ -147,8 +162,16 @@ void __attribute__ ((noinline)) MutexLock::unlock(void){
 
   // If we have any threads waiting on the mutex. 
   if(thread_list.num_elemnts() != 0){
+
     // We get the highest priority thread first. 
     thread_t *next_thread = (thread_t*)thread_list.pop(); 
+
+    // Since our code is lazy and only runs at the last moment
+    // When we are looking for the next thread to activate, 
+    // If that thread has already been unlocked via timeout, we don't remove it from the heap
+    // This gets really messy and I need to find a better way to deal with this. 
+    while(next_thread->flags != THREAD_RUNNING &&  thread_list.num_elemnts() != 0)
+      next_thread = (thread_t*) thread_list.pop();
 
     // And we wake it up. 
     next_thread->flags = THREAD_RUNNING; 
