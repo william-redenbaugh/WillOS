@@ -57,8 +57,24 @@ bool OSSignal::wait(thread_signal_t thread_signal, uint32_t timeout_ms){
     // What is the thread ID of the current thread. 
     thread_t *current_thread = _os_current_thread();
 
-    // Add it to our array of threads.  
-    this->thread_signal_arr[this->current_thread_count] = current_thread; 
+    bool new_space = true; 
+    int n;
+    for(n = 0; n < current_thread_count; n++){
+        // If we found a timeout in our code, we remove it
+        if(this->thread_signal_arr[n]->flags == THREAD_RUNNING){
+            new_space = false; 
+        }
+    }
+    
+    if(new_space){
+        this->thread_signal_arr[current_thread_count] = current_thread; 
+        // No increment needed since it replaced the previous thread. 
+    }else{
+        // If there was a thread that had already become woken up, we do this
+        this->thread_signal_arr[n] = current_thread; 
+        // We added another thread to the thread queue
+        this->current_thread_count++; 
+    }
     
     // Set thread to sleeping. 
     current_thread->flags = THREAD_SLEEPING; 
@@ -66,9 +82,6 @@ bool OSSignal::wait(thread_signal_t thread_signal, uint32_t timeout_ms){
     // Set next time thread should wake up anyway. 
     current_thread->previous_millis = millis(); 
     current_thread->interval = timeout_ms; 
-
-    // We added another thread to the thread queue
-    this->current_thread_count++; 
 
     // Cleans out future pipeline actions. Most relevant for M7 based CPUs
     __flush_cpu_pipeline(); 
