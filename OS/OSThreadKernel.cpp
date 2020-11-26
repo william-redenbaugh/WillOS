@@ -425,6 +425,43 @@ int os_stop(void) {
 } 
 
 /*!
+* @brief Checks a thread, and based of it's flags will change it's behavior. 
+* @note If the scheduler sees a thread sleeping, it's going to see if it needs to be woken up
+* @note If the scheduler sees a thread blocked via a mutex that has timed out, then it's going to remove that thread from it's respective semaphore and set it as thread running
+* @note If the scheduler sees a thread blocked via a mutex that either has no timeout or hasn't reached it's timeout BUT has an unlocked semaphore. 
+*/
+static inline void check_thread_flags(thread_t *thread){
+  switch (thread->flags)
+  {
+  case THREAD_SLEEPING:
+    if((millis() - thread->previous_millis) >= thread->interval)
+      thread->flags = THREAD_RUNNING; // We wake up the thread. 
+    break;
+  
+  case THREAD_BLOCKED_SEMAPHORE: 
+    break; 
+
+  case THREAD_BLOCKED_SEMAPHORE_TIMEOUT: 
+    break; 
+
+  case THREAD_BLOCKED_MUTEX: 
+    break; 
+
+  case THREAD_BLOCKED_MUTEX_TIMEOUT: 
+    break; 
+
+  case THREAD_BLOCKED_SIGNAL: 
+    break; 
+
+  case THREAD_BLOCKED_SIGNAL_TIMEOUT: 
+    break; 
+  
+  default:
+    break;
+  }
+}
+
+/*!
 *   @brief Increments to next thread for context switching
 *   @note Not to be called externally!
 *   @param  none
@@ -453,10 +490,8 @@ inline void os_get_next_thread() {
     // Casting general pointer as a thread pointer
     thread = (thread_t*)current_node->ptr; 
 
-    // If the thread has been sleeping, and it's time to wake it up after the interval
-    if(thread->flags == THREAD_SLEEPING)
-      if((millis() - thread->previous_millis) >= thread->interval)
-        thread->flags = THREAD_RUNNING; // We wake up the thread. 
+    // Check
+    check_thread_flags(thread); 
 
     // The highest priority thread runs first!
     if(thread->flags == THREAD_RUNNING)
