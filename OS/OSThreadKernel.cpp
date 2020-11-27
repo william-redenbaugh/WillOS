@@ -434,33 +434,37 @@ static inline void check_thread_flags(thread_t *thread){
   switch (thread->flags)
   {
   case THREAD_SLEEPING:
+    // If the thread was sleeping, and we are waiting on the thread to complete. 
     if((millis() - thread->previous_millis) >= thread->interval)
       thread->flags = THREAD_RUNNING; // We wake up the thread. 
     break;
   
   case THREAD_BLOCKED_SEMAPHORE: 
+    // If there are entrants available for the semaphore, then we run the thread. 
     if(thread->semaphore_max_count >= *thread->mutex_semaphore)
       thread->flags = THREAD_RUNNING; 
     break; 
 
   case THREAD_BLOCKED_SEMAPHORE_TIMEOUT:
+    // If there are entrants available or our timeout has occoured
     if(thread->semaphore_max_count >= *thread->mutex_semaphore || ((millis() - thread->previous_millis) >= thread->interval))
-      thread->flags = THREAD_RUNNING; 
-
-    break; 
+      thread->flags = THREAD_RUNNING;
+    break;
 
   case THREAD_BLOCKED_MUTEX: 
+    // If the mutex has been release, then we grab it for the thread
     if(thread->mutex_semaphore == 0)
       thread->flags = THREAD_RUNNING; 
     break; 
 
   case THREAD_BLOCKED_MUTEX_TIMEOUT: 
+    // If the mutex has been released or the timeout has occoured, we take care of the thread. 
     if(thread->mutex_semaphore == 0 || ((millis() - thread->previous_millis) >= thread->interval))
       thread->flags = THREAD_RUNNING; 
     break; 
 
   case THREAD_BLOCKED_SIGNAL: 
-    // If a thread is 
+    // If a thread is blocked by a signal and waiting for a particular bit to be set, we run the next thread!
     if(thread->signal_bits_compare && *thread->signal_bit)
       thread->flags = THREAD_RUNNING; 
     break; 
