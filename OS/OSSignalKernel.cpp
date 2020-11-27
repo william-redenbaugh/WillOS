@@ -7,17 +7,9 @@
 *   @param thread_signal_t which signal we are setting
 */
 void OSSignal::signal(thread_signal_t thread_signal){
+    int state = os_stop(); 
     this->bits |= (1 << (uint32_t)thread_signal);
-
-    // Turn of OS so we can play with the threads. 
-    int os_state = os_stop(); 
-    for(int n = 0; n < this->current_thread_count; n++)
-        this->thread_signal_arr[n]->flags = THREAD_RUNNING; 
-    // Reboot OS after mission critical stuff has been taken care of
-    os_start(os_state); 
-
-    // Since we have no more threads that are waiting on this signal 
-    this->current_thread_count = 0; 
+    os_start(state); 
 }
 
 /*!
@@ -25,7 +17,9 @@ void OSSignal::signal(thread_signal_t thread_signal){
 *   @param thread_signal_t which signal we are clearing
 */
 void OSSignal::clear(thread_signal_t thread_signal){
+    int state = os_stop(); 
     this->bits &= ~(1 << (uint32_t)thread_signal);
+    os_start(state); 
 }
 
 /*!
@@ -54,41 +48,18 @@ bool OSSignal::wait(thread_signal_t thread_signal, uint32_t timeout_ms){
     // Stop the operating system so we can make changes to the thread. 
     int os_state = os_stop(); 
 
-    // What is the thread ID of the current thread. 
-    thread_t *current_thread = _os_current_thread();
-
-    bool new_space = true; 
-    int n;
-    for(n = 0; n < current_thread_count; n++){
-        // If we found a timeout in our code, we remove it
-        if(this->thread_signal_arr[n]->flags == THREAD_RUNNING){
-            new_space = false; 
-        }
-    }
+    thread_t *this_thread = _os_current_thread(); 
     
-    if(new_space){
-        this->thread_signal_arr[current_thread_count] = current_thread; 
-        // No increment needed since it replaced the previous thread. 
-    }else{
-        // If there was a thread that had already become woken up, we do this
-        this->thread_signal_arr[n] = current_thread; 
-        // We added another thread to the thread queue
-        this->current_thread_count++; 
-    }
+    // Set the bit that the thread is waiting on
+    this_thread->signal_bit = &this->bits; 
+    // Which bits are we comparing to
+    this_thread->signal_bits_compare = (1 << (uint32_t)thread_signal);
+    this_thread->previous_millis = millis(); 
+    this_thread->interval = timeout_ms; 
+    this_thread->flags = THREAD_BLOCKED_SIGNAL_TIMEOUT; 
     
-    // Set thread to sleeping. 
-    current_thread->flags = THREAD_SLEEPING; 
-
-    // Set next time thread should wake up anyway. 
-    current_thread->previous_millis = millis(); 
-    current_thread->interval = timeout_ms; 
-
-    // Cleans out future pipeline actions. Most relevant for M7 based CPUs
-    __flush_cpu_pipeline(); 
-
     // Restart the OS after we have completed touching the thread. 
     os_start(os_state); 
-
 
     // Context switch out of the thread. 
     _os_yield(); 
@@ -128,22 +99,15 @@ void OSSignal::wait_notimeout(thread_signal_t thread_signal){
         return;
 
     // Stop the operating system so we can make changes to the thread. 
-    int os_state = os_stop(); 
+    int os_state = os_stop();
 
-    // Getting the current thread id. 
-    thread_t *current_thread = _os_current_thread(); 
-
-    // Setting the thread signal to the current thread. 
-    this->thread_signal_arr[this->current_thread_count] = current_thread; 
+    thread_t *this_thread = _os_current_thread(); 
     
-    // Set thread to suspended. The thread will not run until someone else wakes it up
-    current_thread->flags = THREAD_SUSPENDED; 
-
-    // We added another thread to the thread queue
-    this->current_thread_count++; 
-
-    // Cleans out future pipeline actions. Most relevant for M7 based CPUs
-    __flush_cpu_pipeline(); 
+    // Set the bit that the thread is waiting on
+    this_thread->signal_bit = &this->bits; 
+    // Which bits are we comparing to
+    this_thread->signal_bits_compare = (1 << (uint32_t)thread_signal);
+    this_thread->flags = THREAD_BLOCKED_SIGNAL; 
 
     // Restart the OS after we have completed touching the thread. 
     os_start(os_state); 

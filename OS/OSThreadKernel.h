@@ -112,6 +112,46 @@ static const int DEFAULT_STACK0_SIZE = 10240;
 #else 
 static const int DEFAULT_STACK0_SIZE = EXTERNAL_STACK0_SIZE; 
 #endif 
+
+
+/*!
+* @brief Which threads we want to set signals for
+*/
+typedef enum{
+  THREAD_SIGNAL_0   = 0,
+  THREAD_SIGNAL_1   = 1,
+  THREAD_SIGNAL_2   = 2,
+  THREAD_SIGNAL_3   = 3,
+  THREAD_SIGNAL_4   = 4,
+  THREAD_SIGNAL_5   = 5,
+  THREAD_SIGNAL_6   = 6,
+  THREAD_SIGNAL_7   = 7,
+  THREAD_SIGNAL_8   = 8,
+  THREAD_SIGNAL_9   = 9,
+  THREAD_SIGNAL_10  = 10,
+  THREAD_SIGNAL_11  = 11,
+  THREAD_SIGNAL_12  = 12,
+  THREAD_SIGNAL_13  = 13,
+  THREAD_SIGNAL_14  = 14,
+  THREAD_SIGNAL_15  = 15,
+  THREAD_SIGNAL_16  = 16,
+  THREAD_SIGNAL_17  = 17,
+  THREAD_SIGNAL_18  = 18,
+  THREAD_SIGNAL_19  = 19,
+  THREAD_SIGNAL_20  = 20,
+  THREAD_SIGNAL_21  = 21,
+  THREAD_SIGNAL_22  = 22,
+  THREAD_SIGNAL_23  = 23,
+  THREAD_SIGNAL_24  = 24,
+  THREAD_SIGNAL_25  = 25,
+  THREAD_SIGNAL_26  = 26,
+  THREAD_SIGNAL_27  = 27, 
+  THREAD_SIGNAL_28  = 28,
+  THREAD_SIGNAL_29  = 29,
+  THREAD_SIGNAL_30  = 30,
+  THREAD_SIGNAL_31  = 31
+}thread_signal_t;
+
 /*!
 *   @brief register stack frame saved by interrupt
 *   @note Used so that when we get interrupts, we can revert back the original registers. 
@@ -212,6 +252,18 @@ typedef struct{
   uint32_t previous_millis; 
   uint32_t interval; 
 
+  // THREAD SIGNAL CODE BEGIN //
+  // Bits that we are waiting on for a signal 
+  volatile uint32_t *signal_bit; 
+  // Bits that we are comparing to. 
+  volatile uint32_t signal_bits_compare; 
+  // THREAD SIGNAL CODE END // 
+
+  // THREAD MUTEX SEMAPHORE CODE BEGIN // 
+  volatile uint32_t *mutex_semaphore; 
+  volatile uint32_t semaphore_max_count; 
+  // THREAD MUTEX SEMAPHORE CODE END // 
+  
 }thread_t;
 
 /*!
@@ -440,44 +492,6 @@ extern "C" void unused_isr(void);
 * @brief allows us to sleep the thread for a period of time. 
 */ 
 extern "C" int enter_sleep(int ms);
-
-/*!
-* @brief Which threads we want to set signals for
-*/
-typedef enum{
-  THREAD_SIGNAL_0   = 0,
-  THREAD_SIGNAL_1   = 1,
-  THREAD_SIGNAL_2   = 2,
-  THREAD_SIGNAL_3   = 3,
-  THREAD_SIGNAL_4   = 4,
-  THREAD_SIGNAL_5   = 5,
-  THREAD_SIGNAL_6   = 6,
-  THREAD_SIGNAL_7   = 7,
-  THREAD_SIGNAL_8   = 8,
-  THREAD_SIGNAL_9   = 9,
-  THREAD_SIGNAL_10  = 10,
-  THREAD_SIGNAL_11  = 11,
-  THREAD_SIGNAL_12  = 12,
-  THREAD_SIGNAL_13  = 13,
-  THREAD_SIGNAL_14  = 14,
-  THREAD_SIGNAL_15  = 15,
-  THREAD_SIGNAL_16  = 16,
-  THREAD_SIGNAL_17  = 17,
-  THREAD_SIGNAL_18  = 18,
-  THREAD_SIGNAL_19  = 19,
-  THREAD_SIGNAL_20  = 20,
-  THREAD_SIGNAL_21  = 21,
-  THREAD_SIGNAL_22  = 22,
-  THREAD_SIGNAL_23  = 23,
-  THREAD_SIGNAL_24  = 24,
-  THREAD_SIGNAL_25  = 25,
-  THREAD_SIGNAL_26  = 26,
-  THREAD_SIGNAL_27  = 27, 
-  THREAD_SIGNAL_28  = 28,
-  THREAD_SIGNAL_29  = 29,
-  THREAD_SIGNAL_30  = 30,
-  THREAD_SIGNAL_31  = 31
-}thread_signal_t;
 
 /*!
 * @brief The staus of a thread whose bits we wanna check

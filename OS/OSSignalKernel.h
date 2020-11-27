@@ -60,10 +60,6 @@ class OSSignal{
     private: 
     // Bits data that we are using to wait with 
     volatile uint32_t bits = 0; 
-
-    // All the threads that are sleeping must be waken up
-    thread_t *thread_signal_arr[MAX_THREADS]; 
-    int current_thread_count = 0; 
 };
 
 #endif 

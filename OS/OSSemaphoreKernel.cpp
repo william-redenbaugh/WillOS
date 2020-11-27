@@ -27,18 +27,16 @@ SemaphoreLockReturnStatus __attribute__ ((noinline))SemaphoreLock::entry(uint32_
     if(this->tryEntry())
         return SEMAPHORE_ACQUIRE_SUCCESS; 
 
-    uint32_t start = millis(); 
+    int state = os_stop(); 
 
-    while(1){
-        if(this->tryEntry())
-            return SEMAPHORE_ACQUIRE_SUCCESS;
+    thread_t *this_thread = _os_current_thread(); 
+    this_thread->flags = THREAD_BLOCKED_SEMAPHORE_TIMEOUT; 
+    this_thread->interval = timeout_ms; 
+    this_thread->previous_millis = millis(); 
+    
 
-        // If we can't acquire the lock :(
-        if(timeout_ms && (millis() - start > timeout_ms))
-            break; 
-        
-        _os_yield(); 
-    }
+    os_start(state); 
+    _os_yield(); 
 
     __flush_cpu_pipeline(); 
 
