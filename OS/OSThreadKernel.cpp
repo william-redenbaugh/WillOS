@@ -439,24 +439,34 @@ static inline void check_thread_flags(thread_t *thread){
     break;
   
   case THREAD_BLOCKED_SEMAPHORE: 
+    if(thread->semaphore_max_count >= *thread->mutex_semaphore)
+      thread->flags = THREAD_RUNNING; 
     break; 
 
-  case THREAD_BLOCKED_SEMAPHORE_TIMEOUT: 
+  case THREAD_BLOCKED_SEMAPHORE_TIMEOUT:
+    if(thread->semaphore_max_count >= *thread->mutex_semaphore || ((millis() - thread->previous_millis) >= thread->interval))
+      thread->flags = THREAD_RUNNING; 
+
     break; 
 
   case THREAD_BLOCKED_MUTEX: 
+    if(thread->mutex_semaphore == 0)
+      thread->flags = THREAD_RUNNING; 
     break; 
 
   case THREAD_BLOCKED_MUTEX_TIMEOUT: 
+    if(thread->mutex_semaphore == 0 || ((millis() - thread->previous_millis) >= thread->interval))
+      thread->flags = THREAD_RUNNING; 
     break; 
 
   case THREAD_BLOCKED_SIGNAL: 
+    // If a thread is 
     if(thread->signal_bits_compare && *thread->signal_bit)
       thread->flags = THREAD_RUNNING; 
     break; 
 
   case THREAD_BLOCKED_SIGNAL_TIMEOUT: 
-    // If either the thread times out or the signal is set.
+    // If either the thread times out or the signal is set, we run this as next thread. 
     if(thread->signal_bits_compare && *thread->signal_bit || ((millis() - thread->previous_millis) >= thread->interval))
       thread->flags = THREAD_RUNNING; 
     break; 

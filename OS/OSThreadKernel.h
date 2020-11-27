@@ -258,8 +258,12 @@ typedef struct{
   // Bits that we are comparing to. 
   volatile uint32_t signal_bits_compare; 
   // THREAD SIGNAL CODE END // 
-  
 
+  // THREAD MUTEX SEMAPHORE CODE BEGIN // 
+  volatile uint32_t *mutex_semaphore; 
+  volatile uint32_t semaphore_max_count; 
+  // THREAD MUTEX SEMAPHORE CODE END // 
+  
 }thread_t;
 
 /*!

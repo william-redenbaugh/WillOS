@@ -25,44 +25,15 @@ MutexLockState_t MutexLock::getState(void){
 MutexLockReturnStatus __attribute__ ((noinline)) MutexLock::lock(uint32_t timeout_ms){
   // Stop the kernel for mission critical stuff. 
   int os_state = os_stop(); 
-
-  // If the lock in unlocked, then we acquire it before we context switch just in case, to prevent any delays
-  if(this->state == MUTEX_UNLOCKED){
-    // Let's acquire it!
-    this->state = MUTEX_LOCKED;
-    // We are done dealing with OS specific commands
-    os_start(os_state);
-    // We gottem
-    return MUTEX_ACQUIRE_SUCESS;
-  }
   
-  // Otherwise we sleep the thread: 
-  thread_t *current_thread = _os_current_thread(); 
-  
-  // When will the thread run next if it isn't premepted yet
-  current_thread->previous_millis = millis(); 
-  current_thread->interval = timeout_ms; 
-
-  // Set thread flags to sleeping. 
-  current_thread->flags = THREAD_SLEEPING; 
-
-  // Whether or not we want to insert in a new place in the thread list or not. 
-  bool insert = true; 
-  PriorityQueueHeapNode* all_elements = thread_list.all_elements(); 
-  for(int n = 0; n < thread_list.num_elemnts(); n++)
-    // 
-    if(all_elements[n].ptr == (void*) current_thread)
-      insert = false; 
-  
-
-  // If this thread wasn't already saved in the heap, we place it there. 
-  if(insert)
-    // Taking care of thread stuff
-    thread_list.insert((void*)current_thread, current_thread->thread_priority);
+  thread_t *this_thread = _os_current_thread(); 
+  this_thread->mutex_semaphore = &this->state; 
+  this_thread->flags = THREAD_BLOCKED_MUTEX_TIMEOUT; 
+  this_thread->interval = timeout_ms; 
+  this_thread->previous_millis = millis(); 
 
   // reboot the OS kernel. 
   os_start(os_state); 
-
   // Context switch out of the thread. 
   _os_yield(); 
 
@@ -123,16 +94,10 @@ void __attribute__ ((noinline)) MutexLock::lockWaitIndefinite(void){
     // We gottem
     return; 
   }
-  
-  // Otherwise we sleep the thread: 
-  thread_t *current_thread = _os_current_thread(); 
 
-  // Set thread flags to sleeping. 
-  current_thread->flags = THREAD_SUSPENDED; 
-
-  // Taking care of thread stuff
-  thread_list.insert((void*)current_thread, current_thread->thread_priority);
-
+  thread_t *this_thread = _os_current_thread(); 
+  this_thread->mutex_semaphore = &this->state; 
+  this_thread->flags = THREAD_BLOCKED_MUTEX;  
   // reboot the OS kernel. 
   os_start(os_state); 
 
@@ -159,23 +124,6 @@ void __attribute__ ((noinline)) MutexLock::unlock(void){
   int os_state = os_stop();
   // Mutex is set to unlocked flag. 
   this->state = MUTEX_UNLOCKED;
-
-  // If we have any threads waiting on the mutex. 
-  if(thread_list.num_elemnts() != 0){
-
-    // We get the highest priority thread first. 
-    thread_t *next_thread = (thread_t*)thread_list.pop(); 
-
-    // Since our code is lazy and only runs at the last moment
-    // When we are looking for the next thread to activate, 
-    // If that thread has already been unlocked via timeout, we don't remove it from the heap
-    // This gets really messy and I need to find a better way to deal with this. 
-    while(next_thread->flags != THREAD_RUNNING &&  thread_list.num_elemnts() != 0)
-      next_thread = (thread_t*) thread_list.pop();
-
-    // And we wake it up. 
-    next_thread->flags = THREAD_RUNNING; 
-  }
   
   __flush_cpu_pipeline();
   os_start(os_state);

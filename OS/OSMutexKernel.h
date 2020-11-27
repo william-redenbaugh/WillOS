@@ -13,8 +13,8 @@
 * @brief The different states that one can get from the mutex
 */
 enum MutexLockState_t{
-  MUTEX_UNLOCKED, 
-  MUTEX_LOCKED
+  MUTEX_UNLOCKED = 0, 
+  MUTEX_LOCKED = 1
 };
 
 /*!
@@ -30,13 +30,7 @@ enum MutexLockReturnStatus{
 */
 class MutexLock{
   public:
-    /*!
-    * @brief Basic initializer for dealing with the mutex stuff.
-    */
-    void init(void){
-      this->thread_list.init_priority_queue(MAX_THREADS);
-    }
-
+    
     /*!
     * @brief Allows us to check the current state of our mutex
     * @returns MutexLockState_t state of the mutex
@@ -67,10 +61,7 @@ class MutexLock{
     void unlock(void);
 
   private: 
-    volatile MutexLockState_t state = MUTEX_UNLOCKED;
-
-    // List of threads that are wating on the mutex.     
-    PriorityQueuePointerHeap thread_list; 
+    volatile uint32_t state = MUTEX_UNLOCKED;
 
 };
 
