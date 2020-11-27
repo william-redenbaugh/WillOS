@@ -33,12 +33,18 @@ SemaphoreLockReturnStatus __attribute__ ((noinline))SemaphoreLock::entry(uint32_
     this_thread->flags = THREAD_BLOCKED_SEMAPHORE_TIMEOUT; 
     this_thread->interval = timeout_ms; 
     this_thread->previous_millis = millis(); 
-    
+
+    // Setting up the semaphore current and future counts here
+    this_thread->mutex_semaphore = &this->state; 
+    this_thread->semaphore_max_count = this->max_entry; 
 
     os_start(state); 
     _os_yield(); 
 
     __flush_cpu_pipeline(); 
+    
+    if(this->tryEntry())
+        return SEMAPHORE_ACQUIRE_SUCCESS; 
 
     // So the compiler stops giving me errors. 
     return SEMAPHORE_ACQUIRE_FAIL;    
@@ -68,12 +74,24 @@ SemaphoreLockReturnStatus SemaphoreLock::tryEntry(void){
 void __attribute__ ((noinline)) SemaphoreLock::entryWaitIndefinite(void){
     if(this->tryEntry())
         return; 
+
+    int state = os_stop(); 
+
+    // Pointer to the current thread. 
+    thread_t *this_thread = _os_current_thread(); 
+
+    // Setting up the semaphore current and future counts here
+    this_thread->flags = THREAD_BLOCKED_SEMAPHORE; 
+    this_thread->mutex_semaphore = &this->state; 
+    this_thread->semaphore_max_count = this->max_entry; 
     
-    while(1){
-        if(this->tryEntry())
-            return;
-        _os_yield(); 
-    }
+    os_start(state);
+    _os_yield();
+    __flush_cpu_pipeline(); 
+    
+    // Increment the semaphore so it's valid. 
+    this->tryEntry(); 
+
     // So the compiler stops giving me errors. 
     return;     
 }
