@@ -451,12 +451,17 @@ static inline void check_thread_flags(thread_t *thread){
     break; 
 
   case THREAD_BLOCKED_SIGNAL: 
+    if(thread->signal_bits_compare && *thread->signal_bit)
+      thread->flags = THREAD_RUNNING; 
     break; 
 
   case THREAD_BLOCKED_SIGNAL_TIMEOUT: 
+    // If either the thread times out or the signal is set.
+    if(thread->signal_bits_compare && *thread->signal_bit || ((millis() - thread->previous_millis) >= thread->interval))
+      thread->flags = THREAD_RUNNING; 
     break; 
   
-  default:
+  default: 
     break;
   }
 }
@@ -490,7 +495,7 @@ inline void os_get_next_thread() {
     // Casting general pointer as a thread pointer
     thread = (thread_t*)current_node->ptr; 
 
-    // Check
+    // Checking to see what the threads are doing. 
     check_thread_flags(thread); 
 
     // The highest priority thread runs first!
