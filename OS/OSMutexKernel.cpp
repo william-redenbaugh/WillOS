@@ -12,7 +12,7 @@ Last Edit Date: 10/24/2020
 */
 MutexLockState_t MutexLock::getState(void){
   int os_state = os_stop(); 
-  MutexLockState_t state = this->state; 
+  MutexLockState_t state = (MutexLockState_t)this->state; 
   os_start(os_state);
   return state; 
 }
