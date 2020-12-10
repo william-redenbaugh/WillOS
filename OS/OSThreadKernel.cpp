@@ -386,6 +386,11 @@ void threads_init(void){
   //t4_gpt_init(200);       // tick every millisecond
 #endif
   os_add_thread(&remainder_thread, NULL, 0, remainder_thread_stack_space, remainder_thread_stack);
+
+// If we want the void loop thread to still work
+#if defined(ARDUINO_LOOP_THREAD)
+  os_add_thread(&loop, NULL, 254, NULL, -1); 
+#endif
 }
 
 /*!

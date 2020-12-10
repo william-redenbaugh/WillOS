@@ -10,12 +10,12 @@
 /*!
 *   @brief Low priority work thread module
 */
-#define LPWORK_MODULE
+// #define LPWORK_MODULE
 
 /*!
 *   @brief Protobuffer Callbacks Handler module
 */
-#define PROTOCALLBACKS_MODULE
+//#define PROTOCALLBACKS_MODULE
 
 /*!
 *   @brief Operating System Semaphore Module
@@ -96,4 +96,8 @@
 */
 // #define BINARY_SEARCH_TREE_MODULE
 
+/*!
+*   @brief If we want Arduino's loop to still run as a thread in TeensyOS
+*/
+// #define ARDUINO_LOOP_THREAD
 #endif 
