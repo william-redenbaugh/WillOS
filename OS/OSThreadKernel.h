@@ -2,22 +2,22 @@
  * Threads.h - Library for threading on the Teensy.
  *
  *******************
- * 
+ *
  * Copyright 2017 by Fernando Trias.
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software 
- * and associated documentation files (the "Software"), to deal in the Software without restriction, 
- * including without limitation the rights to use, copy, modify, merge, publish, distribute, 
- * sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is 
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+ * and associated documentation files (the "Software"), to deal in the Software without restriction,
+ * including without limitation the rights to use, copy, modify, merge, publish, distribute,
+ * sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all copies or 
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or
  * substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING 
- * BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, 
- * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+ * BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  *******************
@@ -34,7 +34,7 @@ Last Edit Date: 8/9/2020
 
 // Currenly the only platform supported by Will-OS is the Teensy 4
 
-// Importing primary libraries. 
+// Importing primary libraries.
 #include <Arduino.h>
 #include <stdint.h>
 
@@ -42,40 +42,40 @@ Last Edit Date: 8/9/2020
 #include "DS_HELPER/fast_malloc.hpp"
 
 /*!
-* @brief Allows us to have priority to our scheduled threads. 
+* @brief Allows us to have priority to our scheduled threads.
 */
 #include "DS_HELPER/priority_queue.hpp"
 
 /*!
-* @brief Enumerated State of different operating system states. 
-* @note Used for dealing with different threading purposes. 
+* @brief Enumerated State of different operating system states.
+* @note Used for dealing with different threading purposes.
 */
 enum os_state_t{
   OS_UNINITIALIZED  = -1,
-  OS_STARTED        = 1, 
-  OS_STOPPED        = 2, 
+  OS_STARTED        = 1,
+  OS_STOPPED        = 2,
   OS_FIRST_RUN      = 3
 };
 
 /*!
 * @brief Enumerated state of different thread states
-* @note Used for dealing with different threading purposes such as creating, enabling, and deleting a thread. 
+* @note Used for dealing with different threading purposes such as creating, enabling, and deleting a thread.
 */
 enum thread_state_t{
   THREAD_DNE        = -1,
-  THREAD_EMPTY      = 0, 
-  THREAD_RUNNING    = 1, 
-  THREAD_ENDED      = 2, 
-  THREAD_ENDING     = 3, 
-  THREAD_SUSPENDED  = 4, 
+  THREAD_EMPTY      = 0,
+  THREAD_RUNNING    = 1,
+  THREAD_ENDED      = 2,
+  THREAD_ENDING     = 3,
+  THREAD_SUSPENDED  = 4,
   THREAD_SLEEPING   = 5,
-  THREAD_BLOCKED_SEMAPHORE = 6, 
-  THREAD_BLOCKED_SEMAPHORE_TIMEOUT = 7, 
-  THREAD_BLOCKED_MUTEX = 8, 
-  THREAD_BLOCKED_MUTEX_TIMEOUT = 9, 
-  THREAD_BLOCKED_SIGNAL = 10, 
+  THREAD_BLOCKED_SEMAPHORE = 6,
+  THREAD_BLOCKED_SEMAPHORE_TIMEOUT = 7,
+  THREAD_BLOCKED_MUTEX = 8,
+  THREAD_BLOCKED_MUTEX_TIMEOUT = 9,
+  THREAD_BLOCKED_SIGNAL = 10,
   THREAD_BLOCKED_SIGNAL_TIMEOUT = 11
-}; 
+};
 
 /*!
 *   @brief Maximum amount of threads the Will-OS supports
@@ -84,8 +84,8 @@ enum thread_state_t{
 #ifndef OS_EXTERN_MAX_THREADS
 static const int MAX_THREADS = 24;
 #else
-static const int MAX_THREADS = OS_EXTERN_MAX_THREADS; 
-#endif 
+static const int MAX_THREADS = OS_EXTERN_MAX_THREADS;
+#endif
 
 /*!
 * @brief Default Tick set to 100 microseconds per tick
@@ -96,22 +96,22 @@ static const int DEFAULT_TICK_MICROSECONDS = 100;
 /*!
 *   @brief Supervisor call number, used for yielding the program
 */
-const int WILL_OS_SVC_NUM = 33; 
+const int WILL_OS_SVC_NUM = 33;
 
 /*!
 *   @brief Supervisor call number, used for yielding the program
 */
-const int WILL_OS_SVC_NUM_ACTIVE = 34; 
+const int WILL_OS_SVC_NUM_ACTIVE = 34;
 
 /*!
-* @brief Default stack size of thread0, or the loop thread. 
-* @note This should be changed based off how much the user needs. Can be changed using macro 
+* @brief Default stack size of thread0, or the loop thread.
+* @note This should be changed based off how much the user needs. Can be changed using macro
 */
 #ifndef EXTERNAL_STACK0_SIZE
-static const int DEFAULT_STACK0_SIZE = 10240; 
-#else 
-static const int DEFAULT_STACK0_SIZE = EXTERNAL_STACK0_SIZE; 
-#endif 
+static const int DEFAULT_STACK0_SIZE = 10240;
+#else
+static const int DEFAULT_STACK0_SIZE = EXTERNAL_STACK0_SIZE;
+#endif
 
 
 /*!
@@ -145,7 +145,7 @@ typedef enum{
   THREAD_SIGNAL_24  = 24,
   THREAD_SIGNAL_25  = 25,
   THREAD_SIGNAL_26  = 26,
-  THREAD_SIGNAL_27  = 27, 
+  THREAD_SIGNAL_27  = 27,
   THREAD_SIGNAL_28  = 28,
   THREAD_SIGNAL_29  = 29,
   THREAD_SIGNAL_30  = 30,
@@ -154,8 +154,8 @@ typedef enum{
 
 /*!
 *   @brief register stack frame saved by interrupt
-*   @note Used so that when we get interrupts, we can revert back the original registers. 
-*/ 
+*   @note Used so that when we get interrupts, we can revert back the original registers.
+*/
 typedef struct {
   uint32_t r0;
   uint32_t r1;
@@ -170,7 +170,7 @@ typedef struct {
 /*!
 *   @brief Stack frame saved by context switch
 *   @note Used for switching between threads, we save all relevant registers between threads somewhere, and get them when needed
-*/ 
+*/
 typedef struct {
   uint32_t r4;
   uint32_t r5;
@@ -223,52 +223,52 @@ typedef struct {
 typedef struct{
   // Size of stack
   int stack_size;
-  
-  // Stack pointer. 
+
+  // Stack pointer.
   uint8_t *stack=0;
-  
+
   // Whether or not stack was allocated by thread creation function
   int my_stack = 0;
-  
+
   // Where we save all our registers for context switching .
   software_stack_t save;
-  
-  // Flags for dealing with thread 
+
+  // Flags for dealing with thread
   volatile thread_state_t flags = THREAD_EMPTY;
-  
-  // Program counter register. 
+
+  // Program counter register.
   void *sp;
 
-  // Thread ticks  
+  // Thread ticks
   int ticks;
 
-  // Flags to set or clear signals to a thread. 
+  // Flags to set or clear signals to a thread.
   volatile uint32_t thread_set_flags = 0x0000;
 
   // Thread priority
-  uint8_t thread_priority; 
+  uint8_t thread_priority;
 
   // Next time the thread will run (in milliseconds)
-  uint32_t previous_millis; 
-  uint32_t interval; 
+  uint32_t previous_millis;
+  uint32_t interval;
 
   // THREAD SIGNAL CODE BEGIN //
-  // Bits that we are waiting on for a signal 
-  volatile uint32_t *signal_bit; 
-  // Bits that we are comparing to. 
-  volatile uint32_t signal_bits_compare; 
-  // THREAD SIGNAL CODE END // 
+  // Bits that we are waiting on for a signal
+  volatile uint32_t *signal_bit;
+  // Bits that we are comparing to.
+  volatile uint32_t signal_bits_compare;
+  // THREAD SIGNAL CODE END //
 
-  // THREAD MUTEX SEMAPHORE CODE BEGIN // 
-  volatile uint32_t *mutex_semaphore; 
-  volatile uint32_t semaphore_max_count; 
-  // THREAD MUTEX SEMAPHORE CODE END // 
-  
+  // THREAD MUTEX SEMAPHORE CODE BEGIN //
+  volatile uint32_t *mutex_semaphore;
+  volatile uint32_t semaphore_max_count;
+  // THREAD MUTEX SEMAPHORE CODE END //
+
 }thread_t;
 
 /*!
 * @brief Redeclaration of thread function
-* @note Holds pointer to begining of thread function subroutine. Holds register space for void pointer 
+* @note Holds pointer to begining of thread function subroutine. Holds register space for void pointer
 */
 typedef void (*thread_func_t)(void*);
 
@@ -280,7 +280,7 @@ typedef void (*int_thread_func_t)(int);
 
 /*!
 * @brief Redeclaration of thread function with no parameter
-* @note  Holds pointer of begining of thread function subroutine. 
+* @note  Holds pointer of begining of thread function subroutine.
 */
 typedef void (*none_thread_func_t);
 
@@ -291,7 +291,7 @@ typedef void (*none_thread_func_t);
 typedef void (*os_isr_function_t)();
 
 /*!
-*   @brief Ensures that all memory access appearing before this program point are taken care of.   
+*   @brief Ensures that all memory access appearing before this program point are taken care of.
 *   @note To understand more, visit: https://www.keil.com/support/man/docs/armasm/armasm_dom1361289870356.htm
 */
 #define __flush_cpu_pipeline() __asm__ volatile("DMB");
@@ -305,8 +305,8 @@ typedef int os_thread_id_t;
 extern "C" {
 
 /*!
-* @brief  Assembly call to the context switch subroutine 
-* @note  Uses for switching "contexts" between threads. 
+* @brief  Assembly call to the context switch subroutine
+* @note  Uses for switching "contexts" between threads.
 */
 void context_switch(void);
 
@@ -346,25 +346,25 @@ void threads_svcall_isr(void);
 */
 void threads_systick_isr(void);
 
-// End of extern c programgs. 
+// End of extern c programgs.
 }
 
 /*!
 *   @brief allows our program to "yield" out of current subroutine
-*   @note Call's hypervisor command to look into something else. 
+*   @note Call's hypervisor command to look into something else.
 */
 extern "C" void _os_yield(void);
 
 #if defined(STM32F407xx) || defined(STM32F767xx)
 /*!
 * @brief Helper function that provides clarity as to how system works.
-* @note This is only during stm32 operations. 
+* @note This is only during stm32 operations.
 */
 #define stm32_os_start() _os_yield()
-#endif 
+#endif
 
 /*!
-* @brief Sleeps the thread through a hypervisor call. 
+* @brief Sleeps the thread through a hypervisor call.
 * @note Sleeps the thread for the alloted time, and wakes up once the thread is ready
 * @param int milliseconds since last system tick
 * @returns none
@@ -373,7 +373,7 @@ extern void os_thread_sleep_ms(int millisecond);
 #define os_thread_delay_ms(millisecond) os_thread_sleep_ms(millisecond)
 
 /*!
-* @brief Sleeps the thread through a hypervisor call. 
+* @brief Sleeps the thread through a hypervisor call.
 * @note Checks in roughly every milliscond until thread is ready to start running again
 * @param seconds
 * @returns none
@@ -386,7 +386,7 @@ extern void os_thread_sleep_ms(int millisecond);
 *   @param none
 *   @returns none
 */
-void threads_init(void); 
+void threads_init(void);
 
 /*!
 * @brief To keep standards, we say os_init() instead
@@ -425,32 +425,32 @@ os_thread_id_t os_add_thread(thread_func_t p, void * arg, uint8_t thread_priorit
 os_thread_id_t os_add_thread(thread_func_t p, void * arg, int stack_size, void *stack);
 
 /*!
-*   @brief Allows us to change the Will-OS System tick. 
-*   @note If you want more precision in your system ticks, take care of this here. 
+*   @brief Allows us to change the Will-OS System tick.
+*   @note If you want more precision in your system ticks, take care of this here.
 *   @param int tick_microseconds
 *   @returns none
 */
 bool os_set_microsecond_timer(int tick_microseconds);
 
 /*!
-* @brief Sets the state of a thread to suspended. 
-* @brief If thread doesn't exist, then 
+* @brief Sets the state of a thread to suspended.
+* @brief If thread doesn't exist, then
 * @param Which thread are we trying to get our state for
 * @returns will_thread_state_t
 */
 os_thread_id_t os_suspend_thread(os_thread_id_t target_thread_id);
 
 /*!
-* @brief Sets the state of a thread to resumed. 
-* @brief If thread doesn't exist or hasn't been run before, then 
+* @brief Sets the state of a thread to resumed.
+* @brief If thread doesn't exist or hasn't been run before, then
 * @param Which thread are we trying to get our state for
 * @returns will_thread_state_t
 */
 os_thread_id_t os_resume_thread(os_thread_id_t target_thread_id);
 
 /*!
-* @brief Sets the state of a thread to dead 
-* @brief If thread doesn't exist, then 
+* @brief Sets the state of a thread to dead
+* @brief If thread doesn't exist, then
 * @param Which thread are we trying to get our state for
 * @returns will_thread_state_t
 */
@@ -458,7 +458,7 @@ os_thread_id_t os_kill_thread(os_thread_id_t target_thread_id);
 
 /*!
 *   @brief Stops the entire Will-OS Kernel
-*   @note Try to avoid stopping the kernel whenever possible. 
+*   @note Try to avoid stopping the kernel whenever possible.
 *   @param none
 *   @returns int original state of machine
 */
@@ -466,45 +466,45 @@ int os_stop(void);
 
 /*!
 *   @brief Starts the entire Will-OS Kernel
-*   @note Try to avoid stopping the kernel whenever possible. 
+*   @note Try to avoid stopping the kernel whenever possible.
 *   @param none
 *   @returns int original state of machine
 */
 int os_start(int prev_state = -1);
 
 /*!
-* @returns The current thread's ID. 
+* @returns The current thread's ID.
 */
 os_thread_id_t _os_current_id(void);
 
 /*!
 * @return Current pointer to thread information
 */
-thread_t *_os_current_thread(void); 
+thread_t *_os_current_thread(void);
 
 /*!
 * @brief unused ISR routine that we can use for whatever
-* @note I guess we have this here if we wanna use it 
+* @note I guess we have this here if we wanna use it
 */
 extern "C" void unused_isr(void);
 
 /*!
-* @brief allows us to sleep the thread for a period of time. 
-*/ 
+* @brief allows us to sleep the thread for a period of time.
+*/
 extern "C" int enter_sleep(int ms);
 
 /*!
 * @brief The staus of a thread whose bits we wanna check
 */
 typedef enum{
-  THREAD_SIGNAL_CLEAR = 0, 
-  THREAD_SIGNAL_SET = 1, 
-  THREAD_SIGNAL_DNE = 2, 
+  THREAD_SIGNAL_CLEAR = 0,
+  THREAD_SIGNAL_SET = 1,
+  THREAD_SIGNAL_DNE = 2,
   THREAD_SIGNAL_TIMEOUT = 3
 }thread_signal_status_t;
 
 /*!
-* @brief Macro that checks if a certain bit in a variable is set. 
+* @brief Macro that checks if a certain bit in a variable is set.
 * @param(variable, position in variable(0 lsb))
 * @returns 1 if true, 0 otherwise
 */
@@ -544,15 +544,15 @@ bool os_signal_thread_clear(thread_signal_t thread_signal, os_thread_id_t target
 * @brief We can check if there are bits that are signaled
 * @param which bits we want to check,
 * @return if those bits are set or not
-*/  
+*/
 thread_signal_status_t os_thread_checkbits(thread_signal_t thread_signal);
 
 /*!
 * @brief We can check if there are bits that are signaled
 * @param thread_signal which bits we want to check,
-* @param target_thread_id which thread we 
+* @param target_thread_id which thread we
 * @return if those bits are set or not
-*/  
+*/
 thread_signal_status_t os_checkbits_thread(thread_signal_t thread_signal, os_thread_id_t target_thread_id);
 
 /*!

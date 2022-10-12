@@ -6,27 +6,27 @@
 
 #ifdef VOLTAGE_READ_MODULE
 
-// Primary Arduino Module 
+// Primary Arduino Module
 #include <Arduino.h>
 
 /*!
 *   @brief Helper module that lets us read data from battery easily and intuitively. s
 */
 class VoltageRead{
-    public: 
-        void init(uint8_t gpio, uint8_t divider); 
-        bool configureBattery(float min_bounds, float max_bounds); 
-        float getVoltage(void); 
-        float batteryPercentage(void); 
+    public:
+        void init(uint8_t gpio, uint8_t divider);
+        bool configureBattery(float min_bounds, float max_bounds);
+        float getVoltage(void);
+        float batteryPercentage(void);
 
-    private: 
-        uint8_t divider = 1; 
+    private:
+        uint8_t divider = 1;
         uint8_t gpio;
 
-        float min_bounds; 
-        float max_bounds; 
-        float delta; 
-}; 
+        float min_bounds;
+        float max_bounds;
+        float delta;
+};
 
 #endif
-#endif 
+#endif

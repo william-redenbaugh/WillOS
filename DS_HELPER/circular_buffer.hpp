@@ -3,21 +3,21 @@
 
 #include "../enabled_modules.h"
 
-#ifdef CIRCULAR_BUFFER_STRING_MODULE 
+#ifdef CIRCULAR_BUFFER_STRING_MODULE
 
-#include <Arduino.h> 
+#include <Arduino.h>
 #include "DS_HELPER/fast_malloc.hpp"
 
 /*!
-*   @brief Helper structure that lets you return character pointer and string length. 
+*   @brief Helper structure that lets you return character pointer and string length.
 */
 struct RetCircularBufferString{
-    char *arr; 
-    uint32_t len; 
-}; 
+    char *arr;
+    uint32_t len;
+};
 
 class CircularBufferString{
-public: 
+public:
 
 #ifdef __IMXRT1062__
     /*!
@@ -25,19 +25,19 @@ public:
     *   @param uint32_t buffer_size(size of buffer you want your str buffer to have)
     *   @param bool whether or not we allocated onto the faster RAM bank, or the slower RAM bank
     */
-    void init(uint32_t buffer_size, bool fast_mem); 
+    void init(uint32_t buffer_size, bool fast_mem);
 #else
     /*!
     *   @brief Initializes the circular buffer with initalized array
     *   @param uint32_t buffer_size(size of buffer you want your str buffer to have)
     */
-    void init(uint32_t buffer_size); 
+    void init(uint32_t buffer_size);
 #endif
 
     /*!
     *   @brief Initializes the circular buffer with initalized array
     *   @param uint32_t buffer_size(size of buffer you want your str buffer to have)
-    *   @param char* pointer to ringbuffer array memory. 
+    *   @param char* pointer to ringbuffer array memory.
     */
     void init(uint32_t buffer_size, char *arr);
 
@@ -50,51 +50,51 @@ public:
 
     /*!
     *   @brief Get_string contents
-    *   @returns RetCircularBufferString struct with char array pointer and string length 
+    *   @returns RetCircularBufferString struct with char array pointer and string length
     */
-    RetCircularBufferString get_entire_buffer(void); 
+    RetCircularBufferString get_entire_buffer(void);
 
 
     /*!
     *   @brief Deconstructs array
     */
-    void deinit(void); 
-  
-private: 
+    void deinit(void);
+
+private:
 
     /*!
-    *   @brief Ringbuffer array and length. 
+    *   @brief Ringbuffer array and length.
     */
-    char *buffer = NULL; 
-    uint32_t buffer_length; 
+    char *buffer = NULL;
+    uint32_t buffer_length;
 
     /*!
-    *   @brief Current position of the ring buffer 
-    */ 
-    uint32_t current_position; 
+    *   @brief Current position of the ring buffer
+    */
+    uint32_t current_position;
 
 #ifdef __IMXRT1062__
     /*!
     *   @brief Whether or not we are using the fast memory bank
     */
-    bool fast_mem; 
+    bool fast_mem;
 #endif
 
 };
-#endif 
+#endif
 
 #ifdef CIRCULAR_BUFFER_POINTER_MODULE
 
 /*!
-*   @brief Returns struct with Circular Buffer pointer data. 
+*   @brief Returns struct with Circular Buffer pointer data.
 */
 struct RetCircularBufferPointer{
-    void** ptr; 
-    uint32_t len; 
+    void** ptr;
+    uint32_t len;
 };
 
 class CircularBufferPointer{
-public: 
+public:
 
 #ifdef __IMXRT1062__
     /*!
@@ -102,19 +102,19 @@ public:
     *   @param uint32_t buffer_size(size of buffer you want your str buffer to have)
     *   @param bool whether or not we allocated onto the faster RAM bank, or the slower RAM bank
     */
-    void init(uint32_t buffer_size, bool fast_mem); 
+    void init(uint32_t buffer_size, bool fast_mem);
 #else
     /*!
     *   @brief Initializes the circular buffer with initalized array
     *   @param uint32_t buffer_size(size of buffer you want your str buffer to have)
     */
-    void init(uint32_t buffer_size); 
+    void init(uint32_t buffer_size);
 #endif
 
     /*!
     *   @brief Initializes the circular buffer with initalized array
     *   @param uint32_t buffer_size(size of buffer you want your str buffer to have)
-    *   @param char* pointer to ringbuffer array memory. 
+    *   @param char* pointer to ringbuffer array memory.
     */
     void init(uint32_t buffer_size, void **arr);
 
@@ -127,35 +127,35 @@ public:
 
     /*!
     *   @return Struct that holds enough info to get entire buffer(void **ptr array and uint32_t len of ringbuffer array)
-    */  
-    RetCircularBufferPointer get_entire_buffer(void); 
+    */
+    RetCircularBufferPointer get_entire_buffer(void);
 
     /*!
     *   @brief Deconstructs array
     */
-    void deinit(void); 
+    void deinit(void);
 
-private: 
+private:
 
     /*!
     *   @brief General purpose pointer array to pointers. Ringbuffer array and length
     */
-    void **buffer; 
-    uint32_t buffer_length; 
+    void **buffer;
+    uint32_t buffer_length;
 
     /*!
-    *   @brief Current position of the ring buffer 
-    */ 
-    uint32_t current_position; 
+    *   @brief Current position of the ring buffer
+    */
+    uint32_t current_position;
 
     #ifdef __IMXRT1062__
     /*!
     *   @brief Whether or not we are using the fast memory bank
     */
-    bool fast_mem; 
+    bool fast_mem;
 #endif
 
 };
 
 #endif
-#endif 
+#endif

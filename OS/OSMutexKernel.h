@@ -13,7 +13,7 @@
 * @brief The different states that one can get from the mutex
 */
 enum MutexLockState_t{
-  MUTEX_UNLOCKED = 0, 
+  MUTEX_UNLOCKED = 0,
   MUTEX_LOCKED = 1
 };
 
@@ -21,16 +21,16 @@ enum MutexLockState_t{
 * @brief Enumerated success or failiure of acquiring the mutex
 */
 enum MutexLockReturnStatus{
-  MUTEX_ACQUIRE_SUCESS  = 1, 
+  MUTEX_ACQUIRE_SUCESS  = 1,
   MUTEX_ACQUIRE_FAIL    = 0
 };
 
 /*!
-* @brief Object descriptor to control a semaphore 
+* @brief Object descriptor to control a semaphore
 */
 class MutexLock{
   public:
-    
+
     /*!
     * @brief Allows us to check the current state of our mutex
     * @returns MutexLockState_t state of the mutex
@@ -45,25 +45,25 @@ class MutexLock{
     MutexLockReturnStatus lock(uint32_t timeout_ms);
 
     /*!
-    * @brief Attempt to lock the mutex without timeout. 
+    * @brief Attempt to lock the mutex without timeout.
     * @returns MutexLockReturnState state of whether or not we locked the mutex or not
     */
     MutexLockReturnStatus tryLock(void);
-    
+
     /*!
     * @brief Waits for the lock indefinitely
     */
     void lockWaitIndefinite(void);
 
     /*!
-    * @brief Unlocks a mutex if it hasn't been otherwise locked. 
+    * @brief Unlocks a mutex if it hasn't been otherwise locked.
     */
     void unlock(void);
 
-  private: 
+  private:
     volatile uint32_t state = MUTEX_UNLOCKED;
 
 };
 
 #endif
-#endif 
+#endif

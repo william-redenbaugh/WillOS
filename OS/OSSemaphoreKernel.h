@@ -6,61 +6,61 @@
 
 #ifdef SEMAPHORE_MODULE
 
-#include <Arduino.h> 
+#include <Arduino.h>
 #include "OSThreadKernel.h"
 
 /*!
 * @brief Enumerated success or failiure of acquiring the semaphore
 */
 enum SemaphoreLockReturnStatus{
-    SEMAPHORE_ACQUIRE_SUCCESS = 1, 
-    SEMAPHORE_ACQUIRE_FAIL = 0, 
-}; 
+    SEMAPHORE_ACQUIRE_SUCCESS = 1,
+    SEMAPHORE_ACQUIRE_FAIL = 0,
+};
 
 /*!
 *   @brief Object descriptor to control a semaphore
 *   @brief By default a binary semaphore()
 */
 class SemaphoreLock{
-    public: 
+    public:
 
         /*!
-        *   @brief Get's the current entrants / states of the semaphore 
+        *   @brief Get's the current entrants / states of the semaphore
         *   @return SemaphoreLockState_t state of the semaphore
         */
-        uint32_t getState(void); 
-        
+        uint32_t getState(void);
+
         /*!
         * @brief Allows us to acquire our semaphore
         * @param timeout_ms
         * @returns SemaphoreLockReturnStatus or whether or not we were able to get the mutex
         */
-        SemaphoreLockReturnStatus entry(uint32_t timeout_ms); 
-        
+        SemaphoreLockReturnStatus entry(uint32_t timeout_ms);
+
         /*!
         * @brief Allows us to acquire our semaphore
         * @param timeout_ms
         * @returns SemaphoreLockReturnStatus or whether or not we were able to get the mutex
         */
-        SemaphoreLockReturnStatus tryEntry(void); 
+        SemaphoreLockReturnStatus tryEntry(void);
 
         /*!
         *   @brief Waits
         */
-        void entryWaitIndefinite(void); 
+        void entryWaitIndefinite(void);
 
         /*!
         *   @brief Decrements the current semaphore counter
         */
-        void exit(void); 
+        void exit(void);
 
-    private: 
+    private:
         /*!
-        *   @brief 
+        *   @brief
         */
-        volatile uint32_t state = 0; 
-        uint32_t max_entry = 1; 
-}; 
+        volatile uint32_t state = 0;
+        uint32_t max_entry = 1;
+};
 
 #endif
-#endif 
+#endif
