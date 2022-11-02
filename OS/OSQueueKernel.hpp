@@ -17,7 +17,7 @@ struct QueueData{
 class VoidOSQueue{
     public:
     MutexLock queue_lock;
-    uint32_t queue_len = 0;
+    volatile uint32_t queue_len = 0;
     uint32_t current_elements = 0;
     QueueData *data_buffer;
     int head = 0;
@@ -44,6 +44,13 @@ class VoidOSQueue{
      * @note Returns NULL if there is no available element
     */
     QueueData pop(void);
+
+    /**
+     * @brief Removes off topmost element from queue, blocks until it's ready.
+     * @return QueueData struct to topmost data
+     * @note Returns null if there is no available element
+    */
+    QueueData popBlocking(void);
 };
 
 #endif
