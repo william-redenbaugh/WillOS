@@ -50,3 +50,21 @@ QueueData VoidOSQueue::pop(void){
     this->queue_lock.unlock();
     return new_data;
 }
+
+QueueData VoidOSQueue::popBlocking(void){
+    QueueData new_data;
+    memset((void*)&new_data, 0, sizeof(new_data));
+    while(this->current_elements == 0){
+        os_thread_delay_ms(10);
+    }
+    this->queue_lock.lockWaitIndefinite();
+    new_data.data = this->data_buffer[this->head].data;
+    new_data.type = this->data_buffer[this->head].type;
+    this->current_elements--;
+    this->head++;
+    if(this->head == this->queue_len)
+        this->head = 0;
+
+    this->queue_lock.unlock();
+    return new_data;
+}
