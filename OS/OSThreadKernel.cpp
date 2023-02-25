@@ -458,7 +458,7 @@ static inline void check_thread_flags(thread_t *thread){
 
   case THREAD_BLOCKED_MUTEX:
     // If the mutex has been release, then we grab it for the thread
-    if(thread->mutex_semaphore == 0)
+    if(*thread->mutex_semaphore == 0)
       thread->flags = THREAD_RUNNING;
     break;
 
@@ -558,8 +558,7 @@ void os_del_process(void){
   // Restart the will-os kernel
   os_start(old_state);
 
-  // Just keep sitting until context change has been called by ISR again.
-  while(1);
+  //_os_yield();
 }
 
 /*!
