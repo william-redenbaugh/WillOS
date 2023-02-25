@@ -97,6 +97,7 @@ void __attribute__ ((noinline)) MutexLock::lockWaitIndefinite(void){
 
   thread_t *this_thread = _os_current_thread();
   this_thread->mutex_semaphore = &this->state;
+  //this_thread->thread_set_flags
   this_thread->flags = THREAD_BLOCKED_MUTEX;
   // reboot the OS kernel.
   os_start(os_state);

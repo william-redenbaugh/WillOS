@@ -475,7 +475,7 @@ int os_start(int prev_state = -1);
 /*!
 * @returns The current thread's ID.
 */
-os_thread_id_t _os_current_id(void);
+os_thread_id_t os_current_id(void);
 
 /*!
 * @return Current pointer to thread information
