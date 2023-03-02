@@ -480,6 +480,8 @@ static inline void check_thread_flags(thread_t *thread){
       thread->flags = THREAD_RUNNING;
     break;
 
+  case THREAD_BLOCKED_QUEUE:
+    break;
   default:
     break;
   }

@@ -62,19 +62,20 @@ enum os_state_t{
 * @note Used for dealing with different threading purposes such as creating, enabling, and deleting a thread.
 */
 enum thread_state_t{
-  THREAD_DNE        = -1,
-  THREAD_EMPTY      = 0,
-  THREAD_RUNNING    = 1,
-  THREAD_ENDED      = 2,
-  THREAD_ENDING     = 3,
-  THREAD_SUSPENDED  = 4,
-  THREAD_SLEEPING   = 5,
-  THREAD_BLOCKED_SEMAPHORE = 6,
-  THREAD_BLOCKED_SEMAPHORE_TIMEOUT = 7,
-  THREAD_BLOCKED_MUTEX = 8,
-  THREAD_BLOCKED_MUTEX_TIMEOUT = 9,
-  THREAD_BLOCKED_SIGNAL = 10,
-  THREAD_BLOCKED_SIGNAL_TIMEOUT = 11
+  THREAD_DNE                          = -1,
+  THREAD_EMPTY                        = 0,
+  THREAD_RUNNING                      = 1,
+  THREAD_ENDED                        = 2,
+  THREAD_ENDING                       = 3,
+  THREAD_SUSPENDED                    = 4,
+  THREAD_SLEEPING                     = 5,
+  THREAD_BLOCKED_SEMAPHORE            = 6,
+  THREAD_BLOCKED_SEMAPHORE_TIMEOUT    = 7,
+  THREAD_BLOCKED_MUTEX                = 8,
+  THREAD_BLOCKED_MUTEX_TIMEOUT        = 9,
+  THREAD_BLOCKED_SIGNAL               = 10,
+  THREAD_BLOCKED_SIGNAL_TIMEOUT       = 11,
+  THREAD_BLOCKED_QUEUE                = 12,
 };
 
 /*!

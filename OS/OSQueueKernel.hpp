@@ -17,6 +17,8 @@ struct QueueData{
 class VoidOSQueue{
     public:
     MutexLock queue_lock;
+    MutexLock consumer_lock;
+    thread_t *consumer_thread_ptr;
     volatile uint32_t queue_len = 0;
     uint32_t current_elements = 0;
     QueueData *data_buffer;
