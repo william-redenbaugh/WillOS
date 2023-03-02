@@ -18,7 +18,7 @@ class VoidOSQueue{
     public:
     MutexLock queue_lock;
     MutexLock consumer_lock;
-    thread_t *consumer_thread_ptr;
+    thread_t *consumer_thread_ptr = NULL;
     volatile uint32_t queue_len = 0;
     uint32_t current_elements = 0;
     QueueData *data_buffer;
