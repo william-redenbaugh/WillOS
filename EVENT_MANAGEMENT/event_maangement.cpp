@@ -1,6 +1,6 @@
 #include "event_management.h"
 #include "event_type_list.h"
-#include "EventQueue.hpp"
+#include "EventQueue.h"
 #include "OS/OSMutexKernel.h"
 #include "OS/OSThreadKernel.h"
 #include "OS/error.hpp"
