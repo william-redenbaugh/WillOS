@@ -13,31 +13,31 @@ typedef enum test_events{
     TEST_EVENT_THREE
 }test_events_t;
 
-void state_one_entry_function(void* params){
+void state_one_entry_function(int event, int old_state, int *next_state, void* param){
 
 }
 
-void state_one_exit_function(void* params){
+void state_one_exit_function(int event, int old_state, int *next_state, void* param){
 
 }
 
-void state_two_entry_function(void* params){
+void state_two_entry_function(int event, int old_state, int *next_state, void* param){
 
 }
 
-void state_two_exit_function(void* params){
+void state_two_exit_function(int event, int old_state, int *next_state, void* param){
 
 }
 
-void state_three_entry_function(void* params){
+void state_three_entry_function(int event, int old_state, int *next_state, void* param){
 
 }
 
-void state_three_exit_function(void* params){
+void state_three_exit_function(int event, int old_state, int *next_state, void* param){
 
 }
 
-void state_one_event_one_function(void *params){
+void state_one_event_one_function(int event, int old_state, int *next_state, void *params){
 
 }
 

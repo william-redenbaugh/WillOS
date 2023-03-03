@@ -47,15 +47,27 @@ int statemachine_submit_event(statemachine_t *statemachine, int event){
 
     // Run exit function
     if(statemachine->states_list[current_state].exit_function != NULL)
-        statemachine->states_list[current_state].exit_function(statemachine->states_list[current_state].exit_function_param);
+        statemachine->states_list[current_state].exit_function(
+            event,
+            current_state,
+            &next_state,
+            statemachine->states_list[current_state].exit_function_param);
 
     // Run event callback
     if(statemachine->states_list[current_state].events_list[event].event_cb_function != NULL)
-        statemachine->states_list[current_state].events_list[event].event_cb_function(statemachine->states_list[current_state].events_list[event].cb_param_data);
+        statemachine->states_list[current_state].events_list[event].event_cb_function(
+            event,
+            current_state,
+            &next_state,
+            statemachine->states_list[current_state].events_list[event].cb_param_data);
 
     // Run entry function
     if(statemachine->states_list[next_state].entry_function != NULL){
-        statemachine->states_list[next_state].entry_function(statemachine->states_list[next_state].entry_function_param);
+        statemachine->states_list[next_state].entry_function(
+            event,
+            current_state,
+            &next_state,
+            statemachine->states_list[next_state].entry_function_param);
     }
 
     statemachine->current_state = next_state;
@@ -71,11 +83,19 @@ int statemachine_set_state(statemachine_t *statemachine, int next_state){
 
     // Run exit function
     if(statemachine->states_list[current_state].exit_function != NULL)
-        statemachine->states_list[current_state].exit_function(statemachine->states_list[current_state].exit_function_param);
+        statemachine->states_list[current_state].exit_function(
+            -1,
+            current_state,
+            &next_state,
+            statemachine->states_list[current_state].exit_function_param);
 
     // Run entry function
     if(statemachine->states_list[next_state].entry_function != NULL){
-        statemachine->states_list[next_state].entry_function(statemachine->states_list[next_state].entry_function_param);
+        statemachine->states_list[next_state].entry_function(
+            -1,
+            current_state,
+            &next_state,
+            statemachine->states_list[next_state].entry_function_param);
     }
 
     return MK_OK;

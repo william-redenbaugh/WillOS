@@ -4,7 +4,7 @@
 
 typedef struct{
     void *ptr;
-    event_type_t event;
+    int event;
 }event_data_t;
 
 #define EVENT_PEEK_TIMEOUT 0
@@ -16,7 +16,7 @@ typedef struct{
  * @param ptr Random state pointer to be passed between threads
  * @return int
  */
-int publish_event(event_type_t event, void *ptr);
+int publish_event(int event, void *ptr);
 
 /**
  * @brief Thread that will handle all of our event management stuff.
@@ -35,7 +35,7 @@ void event_management_thread(void *parameters);
  * @return int mk_err status if an error. Otherwise provides the index of the event_subscribe list. Keep that so that you can consume events that are published. Check out error.h to see more information
  * @note 1 Thread can only subscribe to a single list, implementation limitation
  */
-int subscribe_eventlist(event_type_t *event_list, int num_events, int event_length_max);
+int subscribe_eventlist(int *event_list, int num_events, int event_length_max);
 
 /**
  * @brief Checks to see if there are any events in the currently selected local eventspace

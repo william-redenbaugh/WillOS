@@ -6,17 +6,17 @@
 /**
  * @brief Function called when we enter a specific state
 */
-typedef void (*statemachine_entry_function_t)(void*);
+typedef void (*statemachine_entry_function_t)(int event, int old_state, int *next_state, void* param);
 
 /**
  * @brief Function called when we exit a specific state
 */
-typedef void (*statemachine_exit_function_t)(void*);
+typedef void (*statemachine_exit_function_t)(int event, int old_state, int *next_state, void* param);
 
 /**
  * @brief Function called when we switch between different events
 */
-typedef void (*event_function_t)(void*);
+typedef void (*event_function_t)(int event, int old_state, int *next_state, void* param);
 
 /**
  * @brief Structure containing specific event submission metadata
@@ -71,7 +71,7 @@ int statemachine_submit_event(statemachine_t *statemachine, int event);
  * @brief Without using events, we can switch states
  * @note still calls entry and exit functions for states
 */
-int statemachine_set_state(statemachine_t *statemachine, int next_state);
+int statemachine_set_state(statemachine_t *statemachine, int next_state, void *params);
 
 /**
  * @brief Attach events to statemachine
