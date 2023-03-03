@@ -33,7 +33,7 @@ statemachine_t *init_new_statemachine(const int num_states, const int num_events
     return statemachine;
 }
 
-int statemachine_submit_event(statemachine_t *statemachine, int event){
+int statemachine_submit_event(statemachine_t *statemachine, int event, void *params){
     if(statemachine == NULL || statemachine->num_events <= event)
         return MK_INT_ERR;
     int current_state = statemachine->current_state;
@@ -51,7 +51,7 @@ int statemachine_submit_event(statemachine_t *statemachine, int event){
             event,
             current_state,
             &next_state,
-            statemachine->states_list[current_state].exit_function_param);
+            params);
 
     // Run event callback
     if(statemachine->states_list[current_state].events_list[event].event_cb_function != NULL)
@@ -59,7 +59,7 @@ int statemachine_submit_event(statemachine_t *statemachine, int event){
             event,
             current_state,
             &next_state,
-            statemachine->states_list[current_state].events_list[event].cb_param_data);
+            params);
 
     // Run entry function
     if(statemachine->states_list[next_state].entry_function != NULL){
@@ -67,7 +67,7 @@ int statemachine_submit_event(statemachine_t *statemachine, int event){
             event,
             current_state,
             &next_state,
-            statemachine->states_list[next_state].entry_function_param);
+            params);
     }
 
     statemachine->current_state = next_state;
@@ -75,7 +75,7 @@ int statemachine_submit_event(statemachine_t *statemachine, int event){
     return MK_OK;
 }
 
-int statemachine_set_state(statemachine_t *statemachine, int next_state){
+int statemachine_set_state(statemachine_t *statemachine, int next_state, void *param){
     if(statemachine == NULL || statemachine->num_events <= next_state)
         return MK_INT_ERR;
 
@@ -87,7 +87,7 @@ int statemachine_set_state(statemachine_t *statemachine, int next_state){
             -1,
             current_state,
             &next_state,
-            statemachine->states_list[current_state].exit_function_param);
+            param);
 
     // Run entry function
     if(statemachine->states_list[next_state].entry_function != NULL){
@@ -95,13 +95,13 @@ int statemachine_set_state(statemachine_t *statemachine, int next_state){
             -1,
             current_state,
             &next_state,
-            statemachine->states_list[next_state].entry_function_param);
+            param);
     }
 
     return MK_OK;
 }
 
-int set_statemachine_event_cb(statemachine_t *statemachine, int state, int event, int next_state, event_function_t func, void *params){
+int set_statemachine_event_cb(statemachine_t *statemachine, int state, int event, int next_state, event_function_t func){
 
     if(statemachine == NULL || statemachine->num_states <= state || statemachine->num_events <= event)
         return MK_INT_ERR;
@@ -111,7 +111,6 @@ int set_statemachine_event_cb(statemachine_t *statemachine, int state, int event
     event_submit->active = true;
     event_submit->event_cb_function = func;
     event_submit->event_id = event;
-    event_submit->cb_param_data = params;
     event_submit->next_state = next_state;
 
     return MK_OK;

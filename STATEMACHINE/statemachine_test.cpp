@@ -42,14 +42,14 @@ void state_one_event_one_function(int event, int old_state, int *next_state, voi
 }
 
 statemachine_state_t test_state_list[] = {
-    {TEST_STATE_ONE, state_one_entry_function, state_one_exit_function, NULL, NULL, sizeof(test_events_t), NULL},
-    {TEST_STATE_ONE, state_two_entry_function, state_two_exit_function, NULL, NULL, sizeof(test_events_t), NULL},
-    {TEST_STATE_THREE, state_three_entry_function, state_three_exit_function, NULL, NULL, sizeof(test_events_t), NULL},
+    {TEST_STATE_ONE, state_one_entry_function, state_one_exit_function, sizeof(test_events_t), NULL},
+    {TEST_STATE_ONE, state_two_entry_function, state_two_exit_function, sizeof(test_events_t), NULL},
+    {TEST_STATE_THREE, state_three_entry_function, state_three_exit_function, sizeof(test_events_t), NULL},
 };
 
 void test_new_statemachine(void){
     const int num_states = sizeof(test_state_list)/sizeof(statemachine_state_t);
     statemachine_t *test_sm = init_new_statemachine(num_states, sizeof(test_events), TEST_STATE_ONE,test_state_list);
-    set_statemachine_event_cb(test_sm, TEST_STATE_ONE, TEST_EVENT_ONE, TEST_STATE_TWO, state_one_event_one_function, NULL);
-    statemachine_submit_event(test_sm, TEST_EVENT_ONE);
+    set_statemachine_event_cb(test_sm, TEST_STATE_ONE, TEST_EVENT_ONE, TEST_STATE_TWO, state_one_event_one_function);
+    statemachine_submit_event(test_sm, TEST_EVENT_ONE, NULL);
 }

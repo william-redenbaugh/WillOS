@@ -38,8 +38,6 @@ typedef struct statemachine_state
     int state;
     statemachine_entry_function_t entry_function;
     statemachine_exit_function_t exit_function;
-    void *exit_function_param;
-    void *entry_function_param;
 
     int num_events;
     event_submission_t *events_list;
@@ -65,18 +63,18 @@ statemachine_t *init_new_statemachine(const int num_states, const int num_events
 /**
  * @brief Submits event to existing statemachine
 */
-int statemachine_submit_event(statemachine_t *statemachine, int event);
+int statemachine_submit_event(statemachine_t *statemachine, int event, void *params);
 
 /**
  * @brief Without using events, we can switch states
  * @note still calls entry and exit functions for states
 */
-int statemachine_set_state(statemachine_t *statemachine, int next_state, void *params);
+int statemachine_set_state(statemachine_t *statemachine, int next_state, void *param);
 
 /**
  * @brief Attach events to statemachine
 */
-int set_statemachine_event_cb(statemachine_t *statemachine, int state, int event, int next_state, event_function_t func, void *params);
+int set_statemachine_event_cb(statemachine_t *statemachine, int state, int event, int next_state, event_function_t func);
 
 /**
  * @brief Clear events in the statemachine
