@@ -3,12 +3,24 @@
 
 #include "OS/error.hpp"
 
+/**
+ * @brief Function called when we enter a specific state
+*/
 typedef void (*statemachine_entry_function_t)(void*);
+
+/**
+ * @brief Function called when we exit a specific state
+*/
 typedef void (*statemachine_exit_function_t)(void*);
 
+/**
+ * @brief Function called when we switch between different events
+*/
 typedef void (*event_function_t)(void*);
 
-
+/**
+ * @brief Structure containing specific event submission metadata
+*/
 typedef struct event_submission{
     event_function_t event_cb_function;
     void * cb_param_data;
@@ -18,6 +30,9 @@ typedef struct event_submission{
 
 }event_submission_t;
 
+/**
+ * @brief Stucture containing all state specifc data for handling statemachine
+*/
 typedef struct statemachine_state
 {
     int state;
@@ -30,6 +45,10 @@ typedef struct statemachine_state
     event_submission_t *events_list;
 } statemachine_state_t;
 
+
+/**
+ * @brief Statemachine handler containing all data for entire statemachine
+*/
 typedef struct statemachine{
     int current_state;
     int latest_event;
@@ -38,6 +57,12 @@ typedef struct statemachine{
     statemachine_state_t *states_list;
 }statemachine_t;
 
-
-statemachine_t *init_new_statemachine(const int num_states, const int num_events, const statemachine_state_t *states_list);
+/**
+ * @brief Generates a new statemachine
+*/
+statemachine_t *init_new_statemachine(const int num_states, const int num_events, const int init_state, const statemachine_state_t *states_list);
+int statemachine_submit_event(statemachine_t *statemachine, int event);
+int statemachine_set_state(statemachine_t *statemachine, int next_state);
+int set_statemachine_event_cb(statemachine_t *statemachine, int state, int event, int next_state, event_function_t func, void *params);
+int clear_statemachine_event_cb(statemachine_t *statemachine, int state, int event);
 #endif

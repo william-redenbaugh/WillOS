@@ -37,6 +37,10 @@ void state_three_exit_function(void* params){
 
 }
 
+void state_one_event_one_function(void *params){
+
+}
+
 statemachine_state_t test_state_list[] = {
     {TEST_STATE_ONE, state_one_entry_function, state_one_exit_function, NULL, NULL, sizeof(test_events_t), NULL},
     {TEST_STATE_ONE, state_two_entry_function, state_two_exit_function, NULL, NULL, sizeof(test_events_t), NULL},
@@ -45,5 +49,7 @@ statemachine_state_t test_state_list[] = {
 
 void test_new_statemachine(void){
     const int num_states = sizeof(test_state_list)/sizeof(statemachine_state_t);
-    statemachine_t *test_sm = init_new_statemachine(num_states, sizeof(test_events), test_state_list);
+    statemachine_t *test_sm = init_new_statemachine(num_states, sizeof(test_events), TEST_STATE_ONE,test_state_list);
+    set_statemachine_event_cb(test_sm, TEST_STATE_ONE, TEST_EVENT_ONE, TEST_STATE_TWO, state_one_event_one_function, NULL);
+    statemachine_submit_event(test_sm, TEST_EVENT_ONE);
 }

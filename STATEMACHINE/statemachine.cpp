@@ -1,15 +1,15 @@
 #include "statemachine.h"
 #include <Arduino.h>
 
-statemachine_t *init_new_statemachine(const int num_states, const int num_events, const statemachine_state_t *states_list){
+statemachine_t *init_new_statemachine(const int num_states, const int num_events, const int init_state, const statemachine_state_t *states_list){
 
     // Basic bounds check
-    if(num_states <= 0 || num_events <= 0 || states_list == NULL)
+    if(num_states <= 0 || num_events <= 0 || init_state >= num_states || states_list == NULL)
         return NULL;
 
     statemachine_t *statemachine = (statemachine_t*)malloc(sizeof(statemachine_t));
 
-    statemachine->current_state = 0;
+    statemachine->current_state = init_state;
     statemachine->latest_event = 0;
     statemachine->num_states = num_states;
     statemachine->latest_event = -1;
@@ -18,8 +18,16 @@ statemachine_t *init_new_statemachine(const int num_states, const int num_events
     for(int n = 0; n < num_states; n++){
         statemachine->states_list[n] = states_list[n];
         statemachine->states_list[n].events_list = (event_submission_t*)malloc(sizeof(event_submission_t) * num_events);
-        for(int k = 0; k < num_events; k++)
-            statemachine->states_list[n].events_list[k].active = false;
+
+        // Init and clear all event submission data.
+        for(int k = 0; k < num_events; k++){
+            event_submission_t *event_sb = &statemachine->states_list[n].events_list[k];
+            event_sb->active = false;
+            event_sb->cb_param_data = NULL;
+            event_sb->event_cb_function = NULL;
+            event_sb->event_id = 0;
+            event_sb->next_state = 0;
+        }
     }
 
     return statemachine;
