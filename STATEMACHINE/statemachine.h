@@ -61,8 +61,25 @@ typedef struct statemachine{
  * @brief Generates a new statemachine
 */
 statemachine_t *init_new_statemachine(const int num_states, const int num_events, const int init_state, const statemachine_state_t *states_list);
+
+/**
+ * @brief Submits event to existing statemachine
+*/
 int statemachine_submit_event(statemachine_t *statemachine, int event);
+
+/**
+ * @brief Without using events, we can switch states
+ * @note still calls entry and exit functions for states
+*/
 int statemachine_set_state(statemachine_t *statemachine, int next_state);
+
+/**
+ * @brief Attach events to statemachine
+*/
 int set_statemachine_event_cb(statemachine_t *statemachine, int state, int event, int next_state, event_function_t func, void *params);
+
+/**
+ * @brief Clear events in the statemachine
+*/
 int clear_statemachine_event_cb(statemachine_t *statemachine, int state, int event);
 #endif
