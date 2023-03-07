@@ -32,13 +32,12 @@ typedef struct event_submission{
     int event_id;
 
     int next_state;
-    bool active;
 
 }event_submission_t;
 
 /*
 */
-#define NUM_EVENTS(x) sizeof(x)/sizeof(event_submission_t)
+#define NUM_EVENTS(x) ((sizeof(x)/sizeof(event_submission_t)) - 1)
 
 /**
  * @brief Stucture containing all state specifc data for handling statemachine
@@ -52,7 +51,7 @@ typedef struct statemachine_state
     event_submission_t *events_list;
 } statemachine_state_t;
 
-#define NUM_STATES(x) sizeof(x) /sizeof(statemachine_state_t)
+#define NUM_STATES(x) ((sizeof(x) /sizeof(statemachine_state_t)) - 1)
 
 /**
  * @brief Statemachine handler containing all data for entire statemachine
@@ -68,7 +67,7 @@ typedef struct statemachine{
 /**
  * @brief Generates a new statemachine
 */
-statemachine_t *init_new_statemachine(const int num_states, const int num_events, const int init_state, statemachine_state_t *states_list);
+statemachine_t *init_new_statemachine(const int num_states, const int init_state, statemachine_state_t *states_list);
 
 /**
  * @brief Submits event to existing statemachine
@@ -81,4 +80,5 @@ int statemachine_submit_event(statemachine_t *statemachine, int event, void *par
 */
 int statemachine_set_state(statemachine_t *statemachine, int next_state, void *param);
 
+void test_new_statemachine(void);
 #endif

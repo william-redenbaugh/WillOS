@@ -1,10 +1,10 @@
 #include "statemachine.h"
 #include <Arduino.h>
 
-statemachine_t *init_new_statemachine(const int num_states, const int num_events, const int init_state, statemachine_state_t *states_list){
+statemachine_t *init_new_statemachine(const int num_states, const int init_state, statemachine_state_t *states_list){
 
     // Basic bounds check
-    if(num_states <= 0 || num_events <= 0 || init_state >= num_states || states_list == NULL)
+    if(num_states <= 0 || states_list == NULL)
         return NULL;
 
     statemachine_t *statemachine = (statemachine_t*)malloc(sizeof(statemachine_t));
@@ -12,13 +12,13 @@ statemachine_t *init_new_statemachine(const int num_states, const int num_events
     statemachine->current_state = init_state;
     statemachine->latest_event = 0;
     statemachine->num_states = num_states;
-    statemachine->latest_event = -1;
+    statemachine->latest_event = NULL_EVENT;
     statemachine->states_list = states_list;
 
     for (int n = 0; n < num_states; n++)
     {
         // Init and clear all event submission data.
-        for(int k = 0; k < num_events; k++){
+        for(int k = 0; k < statemachine->states_list[n].num_events; k++){
             event_submission_t *event_sb = &statemachine->states_list[n].events_list[k];
 
             if(event_sb == NULL){
@@ -32,14 +32,9 @@ statemachine_t *init_new_statemachine(const int num_states, const int num_events
 }
 
 int statemachine_submit_event(statemachine_t *statemachine, int event, void *params){
-    if(statemachine == NULL || statemachine->num_events <= event)
+    if(statemachine == NULL)
         return MK_INT_ERR;
     int current_state = statemachine->current_state;
-
-    // Event isn't active for state.
-    if(statemachine->states_list[current_state].events_list[event].active == false){
-        return MK_INT_ERR;
-    }
 
     int next_state = -1;
     int event_index = -1;
@@ -52,6 +47,7 @@ int statemachine_submit_event(statemachine_t *statemachine, int event, void *par
             next_state = statemachine->states_list[current_state].events_list[n].next_state;
             // Then next event index value
             event_index = statemachine->states_list[current_state].events_list[n].event_id;
+            break;
         }
 
         if(END_EVENT == statemachine->states_list[current_state].events_list[n].event_id){

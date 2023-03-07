@@ -98,10 +98,16 @@ statemachine_state_t test_state_list[] = {
     {TEST_STATE_ONE, state_one_entry_function, state_one_exit_function, NUM_EVENTS(state_one_eventlist), state_one_eventlist},
     {TEST_STATE_ONE, state_two_entry_function, state_two_exit_function, NUM_EVENTS(state_two_eventlist), state_two_eventlist},
     {TEST_STATE_THREE, state_three_entry_function, state_three_exit_function, NUM_EVENTS(state_three_eventlist), state_three_eventlist},
-    {NULL_STATE, NULL, NULL, NULL, NULL},
+    {NULL_STATE, NULL, NULL, 0, NULL},
 };
 
 void test_new_statemachine(void){
-    statemachine_t *test_sm = init_new_statemachine(NUM_STATES(test_state_list), NUM_EVENTS(test_events), TEST_STATE_ONE, test_state_list);
+
+    int num_state_list = NUM_STATES(test_state_list);
+    for(int k = 0; k < num_state_list; k++){
+        int current_state = test_state_list[k].num_events;
+        Serial.print(current_state);
+    }
+    statemachine_t *test_sm = init_new_statemachine(NUM_STATES(test_state_list), TEST_STATE_ONE, test_state_list);
     statemachine_submit_event(test_sm, TEST_EVENT_ONE, NULL);
-}
+} 
