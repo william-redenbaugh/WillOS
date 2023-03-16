@@ -100,4 +100,9 @@
 *   @brief If we want Arduino's loop to still run as a thread in TeensyOS
 */
 // #define ARDUINO_LOOP_THREAD
+
+/**
+ * @brief Unit testing framework
+*/
+#define UNIT_CHECK_MODULE
 #endif 
