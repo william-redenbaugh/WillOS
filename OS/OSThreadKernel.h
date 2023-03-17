@@ -458,6 +458,11 @@ os_thread_id_t os_resume_thread(os_thread_id_t target_thread_id);
 os_thread_id_t os_kill_thread(os_thread_id_t target_thread_id);
 
 /*!
+ * @brief Kills and closes out current thread
+*/
+void os_kill_self_thread(void);
+
+/*!
 *   @brief Stops the entire Will-OS Kernel
 *   @note Try to avoid stopping the kernel whenever possible.
 *   @param none

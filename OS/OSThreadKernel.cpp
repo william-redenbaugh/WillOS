@@ -725,6 +725,14 @@ os_thread_id_t os_kill_thread(os_thread_id_t target_thread_id){
 }
 
 /*!
+ * @brief Kills and closes out current thread
+*/
+void os_kill_self_thread(void){
+  os_kill_thread(os_current_id());
+  _os_yield();
+}
+
+/*!
 * @brief Gets the state of a thread.
 * @brief If thread doesn't exist, then
 * @param Which thread are we trying to get our state for
