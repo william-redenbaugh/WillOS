@@ -9,6 +9,12 @@ static inline void print_log(const char *ptr){
     Serial.printf("%s", ptr);
 }
 
+static inline void print_func(const char *func_name){
+    print_log("Function: ");
+    print_log(func_name);
+    print_log("Status: ");
+}
+
 bool unit_test_mod_init(void){
     total_tests = 0; 
     passed_tests = 0;
@@ -38,9 +44,7 @@ bool unit_testcase_end(void){
 }
 
 bool assert_testcase_in_range(const char *func_name, int x, int high, int low){
-    print_log("Function: ");
-    print_log(func_name);
-    print_log("Status: ");
+    print_func(func_name);
 
     if((x <= high) && (x >= low)){
         print_log("Passed\n");
@@ -52,9 +56,7 @@ bool assert_testcase_in_range(const char *func_name, int x, int high, int low){
 }
 
 bool assert_testcase_equal(const char *func_name, int a, int b){
-    print_log("Function: ");
-    print_log(func_name);
-    print_log("Status: ");
+    print_func(func_name);
 
     if(a == b){
         print_log("Passed\n");
@@ -66,9 +68,7 @@ bool assert_testcase_equal(const char *func_name, int a, int b){
 }
 
 bool assert_testcase_not_equal(const char *func_name, int a, int b){
-    print_log("Function: ");
-    print_log(func_name);
-    print_log("Status: ");
+    print_func(func_name);
 
     if(a != b){
         print_log("Passed\n");
@@ -80,9 +80,8 @@ bool assert_testcase_not_equal(const char *func_name, int a, int b){
 }
 
 bool assert_testcase_null(const char *func_name, void *ptr){
-    print_log("Function: ");
-    print_log(func_name);
-    print_log(" Status: ");
+    print_func(func_name);
+
 
     if(ptr == NULL){
         print_log("Passed\n");
@@ -94,9 +93,8 @@ bool assert_testcase_null(const char *func_name, void *ptr){
 }
 
 bool assert_testcase_not_null(const char *func_name, void *ptr){
-    print_log("Function: ");
-    print_log(func_name);
-    print_log(" Status: ");
+    print_func(func_name);
+
 
     if(ptr != NULL){
         print_log("Passed\n");
@@ -108,9 +106,7 @@ bool assert_testcase_not_null(const char *func_name, void *ptr){
 }
 
 bool assert_testcase_bit_set(const char *func_name, int value, int bitmask){
-    print_log("Function: ");
-    print_log(func_name);
-    print_log(" Status: ");
+    print_func(func_name);
 
     int applied_bitmask = value & bitmask;
     // If we applied the entire bitmask and all bits are still set
@@ -124,9 +120,7 @@ bool assert_testcase_bit_set(const char *func_name, int value, int bitmask){
 }
 
 bool assert_testcase_bit_clear(const char *func_name, int value, int bitmask){
-    print_log("Function: ");
-    print_log(func_name);
-    print_log(" Status: ");
+    print_func(func_name);
 
     int applied_bitmask = value & bitmask;
     // If we applied the entire bitmask and all bits are still set
