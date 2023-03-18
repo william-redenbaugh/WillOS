@@ -7,4 +7,3 @@ My Own Operating System. Context switching heavily derived from TeensyThreads ft
 * STM32F767ZI(Currently only supports cooperative switching)
 * STM32F407VE(Currently only supports cooperative switching)
 * STM32F103CT6 AKA the STM32 Bluepill(Currently only supports Cooperative switching)
-
