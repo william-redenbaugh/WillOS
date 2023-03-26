@@ -13,7 +13,13 @@ void threads_list_init(void)
     {
         if(THREAD_LIST[n].task_fun != NULL){
             // New block of memory from heap for stack pointer
-            uint8_t *stack_ptr = new uint8_t[THREAD_LIST[n].stack_size];
+            uint8_t *stack_ptr;
+            if(THREAD_LIST[n].stack == NULL){
+                stack_ptr = new uint8_t[THREAD_LIST[n].stack_size];
+            }
+            else{
+                stack_ptr = THREAD_LIST[n].stack;
+            }
             os_add_thread((thread_func_t)THREAD_LIST[n].task_fun, THREAD_LIST[n].param, THREAD_LIST[n].stack_size, stack_ptr);
         }
     }

@@ -13,6 +13,7 @@ typedef struct
     void (*task_init_fun)(void *task_params);
     const char *task_name;
     uint16_t stack_size;
+    uint8_t *stack;
     uint16_t priority;
     void *param;
     os_thread_id_t handle;
