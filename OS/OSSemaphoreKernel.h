@@ -17,12 +17,31 @@ enum SemaphoreLockReturnStatus{
     SEMAPHORE_ACQUIRE_FAIL = 0,
 };
 
+/**
+ * @brief Enumerated success or failure of exiting the semaphore
+*/
+enum SemaphoreExitReturnStatus{
+    SEMAPHORE_EXIT_SUCCCESS = 1, 
+    SEMAPHORE_EXIT_FAIL = 0
+};
+
+/**
+ * @brief Little data structure that gives us the count and return status of our semaphore
+*/
+typedef struct SemaphoreRet{
+    SemaphoreLockReturnStatus ret_status;
+    int count;
+}SemaphoreRet;
+
 /*!
 *   @brief Object descriptor to control a semaphore
 *   @brief By default a binary semaphore()
 */
 class SemaphoreLock{
     public:
+        SemaphoreLock(int count){
+            max_entry = count;
+        }
 
         /*!
         *   @brief Get's the current entrants / states of the semaphore
@@ -35,24 +54,24 @@ class SemaphoreLock{
         * @param timeout_ms
         * @returns SemaphoreLockReturnStatus or whether or not we were able to get the mutex
         */
-        SemaphoreLockReturnStatus entry(uint32_t timeout_ms);
+        SemaphoreRet entry(uint32_t timeout_ms);
 
         /*!
         * @brief Allows us to acquire our semaphore
         * @param timeout_ms
         * @returns SemaphoreLockReturnStatus or whether or not we were able to get the mutex
         */
-        SemaphoreLockReturnStatus tryEntry(void);
+        SemaphoreRet tryEntry(void);
 
         /*!
         *   @brief Waits
         */
-        void entryWaitIndefinite(void);
+        int entryWaitIndefinite(void);
 
         /*!
         *   @brief Decrements the current semaphore counter
         */
-        void exit(void);
+        SemaphoreExitReturnStatus exit(void);
 
     private:
         /*!

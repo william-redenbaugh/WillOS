@@ -4,7 +4,7 @@
 
 /*!
 *   Author: William Redenbaugh
-*   Last Edite Date: 9/23/2020
+*   Last Edite Date: 3/27/2023
 */
 
 /*!
@@ -23,9 +23,11 @@ uint32_t SemaphoreLock::getState(void){
 * @param timeout_ms
 * @returns SemaphoreLockReturnStatus or whether or not we were able to get the mutex
 */
-SemaphoreLockReturnStatus __attribute__ ((noinline))SemaphoreLock::entry(uint32_t timeout_ms){
-    if(this->tryEntry())
-        return SEMAPHORE_ACQUIRE_SUCCESS;
+SemaphoreRet __attribute__ ((noinline))SemaphoreLock::entry(uint32_t timeout_ms){
+    SemaphoreRet ret = this->tryEntry();
+
+    if(ret.ret_status == SEMAPHORE_ACQUIRE_SUCCESS)
+        return ret;
 
     int state = os_stop();
 
@@ -43,37 +45,38 @@ SemaphoreLockReturnStatus __attribute__ ((noinline))SemaphoreLock::entry(uint32_
 
     __flush_cpu_pipeline();
 
-    if(this->tryEntry())
-        return SEMAPHORE_ACQUIRE_SUCCESS;
-
-    // So the compiler stops giving me errors.
-    return SEMAPHORE_ACQUIRE_FAIL;
+    return this->tryEntry();
 }
 
 /*!
 *   @brief Trying to enter our semaphore
 *   @returns SemaphoreLockReturnStatus or whether or not we were able to get the mutex
 */
-SemaphoreLockReturnStatus SemaphoreLock::tryEntry(void){
+SemaphoreRet SemaphoreLock::tryEntry(void){
     int os_state = os_stop();
+    SemaphoreRet ret; 
 
     if(this->state < this->max_entry){
         this->state++;
         os_start(os_state);
-        return SEMAPHORE_ACQUIRE_SUCCESS;
+        ret.count = this->state;
+        ret.ret_status = SEMAPHORE_ACQUIRE_SUCCESS;
+        return ret;
     }
 
     os_start(os_state);
-
-    return SEMAPHORE_ACQUIRE_FAIL;
+    ret.count = this->state;
+    ret.ret_status = SEMAPHORE_ACQUIRE_FAIL;
+    return ret;
 }
 
 /*!
 * @brief Waits for the semaphore indefinitely
 */
-void __attribute__ ((noinline)) SemaphoreLock::entryWaitIndefinite(void){
-    if(this->tryEntry())
-        return;
+int __attribute__ ((noinline)) SemaphoreLock::entryWaitIndefinite(void){
+    SemaphoreRet sem_ret = this->tryEntry();
+    if(sem_ret.ret_status == SEMAPHORE_ACQUIRE_SUCCESS)
+        return sem_ret.count;
 
     int state = os_stop();
 
@@ -90,20 +93,28 @@ void __attribute__ ((noinline)) SemaphoreLock::entryWaitIndefinite(void){
     __flush_cpu_pipeline();
 
     // Increment the semaphore so it's valid.
-    this->tryEntry();
+    sem_ret = this->tryEntry();
 
     // So the compiler stops giving me errors.
-    return;
+    return sem_ret.count;
 }
 
 /*!
 *   @brief Decrements the semaphore counter.
 */
-void __attribute__ ((noinline)) SemaphoreLock::exit(void){
-    int os_state = os_stop();;
+SemaphoreExitReturnStatus __attribute__ ((noinline)) SemaphoreLock::exit(void){
+    SemaphoreExitReturnStatus ret = SEMAPHORE_EXIT_SUCCCESS;
+    
+    int os_state = os_stop();
+    
+    if(this->state == 0)
+        ret = SEMAPHORE_EXIT_FAIL;
+    
     this->state--;
     __flush_cpu_pipeline();
     os_start(os_state);
+
+    return ret;
 }
 
 #endif
