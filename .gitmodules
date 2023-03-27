@@ -10,3 +10,6 @@
 [submodule "DS_HELPER/Red-Black-Tree"]
 	path = DS_HELPER/Red-Black-Tree
 	url = git@github.com:william-redenbaugh/Red-Black-Tree.git
+[submodule "MODULES/TeensyOSIPC"]
+	path = MODULES/TeensyOSIPC
+	url = git@github.com:william-redenbaugh/TeensyOSIPC.git
