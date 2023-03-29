@@ -35,7 +35,7 @@ int os_queue_push_timeout(os_queue_t *queue, void *data, int timeout_ms);
 /**
  * @brief 
 */
-int os_queue_push_indefinite(os_queue_t *queue, void *data, int timeout_ms);
+int os_queue_push_indefinite(os_queue_t *queue, void *data);
 
 void* os_queue_pop_timeout(os_queue_t *queue, int timeout_ms);
 

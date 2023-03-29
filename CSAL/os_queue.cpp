@@ -49,7 +49,7 @@ int os_queue_push_timeout(os_queue_t *queue, void *data, int timeout_ms){
     return ret;
 }
 
-int os_queue_push_indefinite(os_queue_t *queue, void *data, int timeout_ms){
+int os_queue_push_indefinite(os_queue_t *queue, void *data){
     int ret = OS_RET_OK;
 
     os_mut_entry_wait_indefinite(&queue->queue_lock);
