@@ -109,7 +109,7 @@ const int WILL_OS_SVC_NUM_ACTIVE = 34;
 * @note This should be changed based off how much the user needs. Can be changed using macro
 */
 #ifndef EXTERNAL_STACK0_SIZE
-static const int DEFAULT_STACK0_SIZE = 10240;
+static const int DEFAULT_STACK0_SIZE = 768;
 #else
 static const int DEFAULT_STACK0_SIZE = EXTERNAL_STACK0_SIZE;
 #endif

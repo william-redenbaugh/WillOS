@@ -45,4 +45,15 @@
  * @returns When there's a timeout during the operation
 */
 #define OS_RET_TIMEOUT (-9)
+
+/**
+ * @returns When we have run out of reentrant locks
+*/
+#define OS_RET_MAX_RENTRANT (-10)
+
+/**
+ @returns When we have a deadlock in our resource sharing
+*/
+#define OS_RET_DEADLOCK (-11)
+
 #endif
