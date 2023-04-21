@@ -5,7 +5,9 @@
 #include "stdint.h"
 
 typedef struct os_uart_t{
-    int n;
+    int bus;
+    uint32_t baud; 
+    int fd;
 }os_uart_t;
 
 /**

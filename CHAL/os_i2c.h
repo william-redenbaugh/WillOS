@@ -5,8 +5,11 @@
 #include  "stdint.h"
 
 typedef struct os_i2c_t{
-    int n;
+    int fd;
+    int speed;
 }os_i2c_t;
+
+extern os_i2c_t i2c_one;
 
 /**
  * @brief Begins the I2C Interface

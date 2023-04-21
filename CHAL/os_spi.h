@@ -5,8 +5,19 @@
 #include "stdint.h"
 
 typedef struct os_spi_t{
-    int n;
+    int fd;
+    int xfer_speed;
+    int bus;
+    int spi_mode;
 }os_spi_t;
+
+/**
+ * @brief There are four SPI busses connected to the Spressense
+*/
+extern os_spi_t spi_zero;
+extern os_spi_t spi_three;
+extern os_spi_t spi_four;
+extern os_spi_t spi_five;
 
 /**
  * @brief Begins the SPI interface
