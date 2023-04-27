@@ -56,4 +56,29 @@
 */
 #define OS_RET_DEADLOCK (-11)
 
+/**
+ * @returns When there are no more resources(outside of memory) left
+*/
+#define OS_RET_NO_MORE_RESOURCES (-12)
+
+/**
+ * @returns When we don't own the resources that we are trying to access
+*/
+#define OS_RET_NOT_OWNED (-13)
+
+
+/**
+ * @returns when we have an unsupported feature
+*/
+#define OS_RET_UNSUPPORTED_FEATURES (-14)
+
+/**
+ * @returns when the OS is null
+*/
+#define OS_RET_NULL_PTR (-15)
+
+/**
+ * @brief Converts POSIX Error messages to our OS Error messages
+*/
+int posix_os_ret_error_conv(int ret);
 #endif
