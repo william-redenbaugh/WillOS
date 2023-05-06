@@ -28,5 +28,5 @@ int os_sem_entry_try(os_sem_t *sem){
 }
 
 int os_sem_count(os_sem_t *sem){
-    sem->lock.getState();
+    return sem->lock.getState();
 }

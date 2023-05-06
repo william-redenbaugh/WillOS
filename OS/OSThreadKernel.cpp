@@ -136,6 +136,12 @@ os_isr_function_t save_svcall_isr;
  */
 volatile uint32_t *context_timer_flag;
 
+volatile uint32_t *spare_mem = (uint32_t*)0xFFFFFFF1;
+
+volatile uint32_t *num_four = (uint32_t*)0b100;
+
+volatile uint32_t *link_register_contents;
+
 #if defined(__IMXRT1062__)
 
 /*!
@@ -262,7 +268,14 @@ void __attribute((naked, noinline)) threads_systick_isr(void){
   if (save_systick_isr) {
     asm volatile("push {r0-r4,lr}");
     (*save_systick_isr)();
+#if (defined(ARDUINO_ARCH_RP2040))
+    __asm volatile( "POP {r0-r4}\n"
+                    "POP {r5}\n"
+                    "MOV lr, r5\n");
+#else
     asm volatile("pop {r0-r4,lr}");
+#endif
+
   }
   if (current_use_systick)
     __asm volatile("b context_switch");
@@ -274,11 +287,14 @@ void __attribute((naked, noinline)) threads_systick_isr(void){
 * @brief ISR dealing with the Supervisor call on the threads.
 * @note Requires further investigation
 */
+
 extern "C" void SVC_Handler (void){
   // Get the right stack so we can extract the PC (next instruction)
   // and then see the SVC calling instruction number
 
-  __asm volatile("TST lr, #4 \n"
+  __asm volatile("LDR r0, = num_four\n"
+                  "MOV r1, lr\n"
+                  "TST r1, r0 \n"
                  "ITE EQ \n"
                  "MRSEQ r0, msp \n"
                  "MRSNE r0, psp \n");

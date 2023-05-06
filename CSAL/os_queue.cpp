@@ -11,6 +11,8 @@ inline void* pop_element(os_queue_t *queue){
     void *data = queue->data[queue->tail] = data;
     queue->tail++;
     queue->current_num_elements--;
+
+    return data;
 }
 
 int os_queue_init(os_queue_t *queue, int max_elements){
@@ -63,6 +65,7 @@ int os_queue_push_indefinite(os_queue_t *queue, void *data){
 
     queue_end: 
     os_mut_exit(&queue->queue_lock);
+    return ret;
 }
 
 void* os_queue_pop_timeout(os_queue_t *queue, int timeout_ms){

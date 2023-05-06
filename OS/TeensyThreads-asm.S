@@ -60,7 +60,6 @@
  * - If using the PIT interrupt, it's priority is set to 255 (the lowest) so it
  *   cannot interrupt an interrupt.
  */
-
   .syntax unified
   .align  2
   .thumb
@@ -101,9 +100,10 @@ context_switch:
   // wreck the system. In theory, we could reschedule the switch until the
   // other interrupt is done. Or we could do a more sophisticated switch, but the
   // easiest thing is to just ignore this condition.
-  CMP lr, #0xFFFFFFF1      // this means we interrupted an interrupt
+  LDR r2, = spare_mem
+  CMP lr, r2      // this means we interrupted an interrupt
   BEQ to_exit              // so don't do anything until next time
-  CMP lr, #0xFFFFFFE1      // this means we interrupted an interrupt with FPU
+  CMP lr, r0      // this means we interrupted an interrupt with FPU
   BEQ to_exit              // so don't do anything until next time
 
 context_switch_check:
@@ -113,7 +113,8 @@ context_switch_check:
   LDR r1, [r0]             // get the value from the address
   CMP r1, #0               // is it 0?
   BEQ call_direct          // if so, thread is done, so switch
-  SUB r1, #1               // otherwise, subtract 1 tick
+
+  SUBS r1, #1               // otherwise, subtract 1 tick
   STR r1, [r0]             // and put it back
   // B to_exit                // and quit until next context_switch
 
@@ -133,7 +134,30 @@ call_direct_active:
   // it's hard to examine the stack so this is easier.
   LDR r0, = current_save       // get the address of the pointer
   LDR r0, [r0]                 // get the pointer itself
+#if (defined(ARDUINO_ARCH_RP2040))
+  // When we are on the M0 architecture, we need to 
+  // Do more dirty work for loading and storing the registers
+  // Sucks because requires more CPU cycles 
+  // But eh 
+  STMIA r0!, {r4-r7}
+
+  STRB r1, [r0, #4]
+  MOV r8, r1
+
+  STRB r1, [r0, #5]
+  MOV r9, r1
+
+  STRB r1, [r0, #6]
+  MOV r10, r1
+
+  STRB r1, [r0, #7]
+  MOV r11, r1
+
+  STRB r1, [r0, #8]
+  MOV r1, lr
+#else
   STMIA r0!, {r4-r11,lr}       // save r4-r11 to buffer
+#endif
 
 #ifdef __ARM_PCS_VFP           // compile if using FPU
   VSTMIA r0!, {s0-s31}         // save all FPU registers
@@ -158,7 +182,27 @@ call_direct_active:
   // Restore the r4-r11 registers from the saved thread
   LDR r0, = current_save       // get address of pointer save buffer
   LDR r0, [r0]                 // get the actual pointer
+#if (defined(ARDUINO_ARCH_RP2040))
+  LDMIA r0!, {r4-r7}
+
+  LDRB r1, [R0, #4]
+  MOV r8, r1
+
+  LDRB r1, [R0, #5]
+  MOV r9, r1
+
+  LDRB r1, [R0, #6]
+  MOV r10, r1 
+
+  LDRB r1, [R0, #7]
+  MOV r11, r1
+
+  LDRB r1, [R0, #8]
+  MOV lr, r1
+
+#else
   LDMIA r0!, {r4-r11,lr}       // and restore r4-r11 & lr from save buffer
+#endif
 
 #ifdef __ARM_PCS_VFP           // compile if using FPU
   VLDMIA r0!, {s0-s31}         // restore all FPU registers
@@ -168,8 +212,20 @@ call_direct_active:
 
   // Setting LR causes the handler to switch MSP/PSP when returning.
   // Switching to MSP? no need to restore MSP.
+#if (defined(ARDUINO_ARCH_RP2040))
+  MOVS r0, #0x10
+  MOV r1, lr
+  ANDS r1, r0
+  MOV lr, r1
+
+  LDR r0, =spare_mem
+  MOV r1, lr
+  ORRS r1, r1, r0
+  MOV lr, r1
+#else
   AND lr, lr, #0x10            // return stack with FP bit?
   ORR lr, lr, #0xFFFFFFE9      // add basic LR bits
+#endif
   LDR r0, = current_msp        // get address of the variable
   LDR r0, [r0]                 // get the actual value
   CMP r0, #0                   // is it 0? Then it's PSP
@@ -179,7 +235,14 @@ call_direct_active:
   LDR r0, = current_sp         // get address of stack pointer
   LDR r0, [r0]                 // get the actual value
   MSR psp, r0                  // save it to PSP
-  ORR lr, lr, #0b100           // set the PSP context switch
+#if (defined(ARDUINO_ARCH_RP2040))
+  MOV  r1, lr 
+  LDR r0, = num_four
+  ORRS r1, r1, r0
+  MOV lr, r1
+#else
+    ORRS lr, lr, #0b100           // set the PSP context switch
+#endif
 
 
 to_exit:
