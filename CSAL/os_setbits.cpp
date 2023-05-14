@@ -2,12 +2,20 @@
 
 
 int os_setbits_init(os_setbits_t *mod){
+    if(mod == NULL){
+        return OS_RET_NULL_PTR;
+    }
+
     mod->signal = OSSignal();
 
     return OS_RET_OK;
 }
 
 int os_setbits_signal(os_setbits_t *mod, uint8_t bit){
+    if(mod == NULL){
+        return OS_RET_NULL_PTR;
+    }
+
     if(bit >= 32)
         return OS_RET_INVALID_PARAM;
 
@@ -17,6 +25,10 @@ int os_setbits_signal(os_setbits_t *mod, uint8_t bit){
 }
 
 int os_clearbits(os_setbits_t * mod, uint8_t bit){
+    if(mod == NULL){
+        return OS_RET_NULL_PTR;
+    }
+
     if(bit >= 32)
         return OS_RET_INVALID_PARAM;
 
@@ -25,6 +37,10 @@ int os_clearbits(os_setbits_t * mod, uint8_t bit){
 }
 
 int os_waitbits(os_setbits_t *mod, uint8_t bit, uint32_t timeout_ms){
+    if(mod == NULL){
+        return OS_RET_NULL_PTR;
+    }
+
     if(bit >= 32)
         return OS_RET_INVALID_PARAM;
 
@@ -35,6 +51,10 @@ int os_waitbits(os_setbits_t *mod, uint8_t bit, uint32_t timeout_ms){
 }
 
 int os_waitbits_indefinite(os_setbits_t *mod, uint8_t bit, uint32_t timeout_ms){
+    if(mod == NULL){
+        return OS_RET_NULL_PTR;
+    }
+    
     if(bit >= 32)
         return OS_RET_INVALID_PARAM;
 

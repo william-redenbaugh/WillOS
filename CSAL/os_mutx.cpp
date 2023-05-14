@@ -2,12 +2,20 @@
 #include "os_mutx.h"
 
 int os_mut_init(os_mut_t *mut){
+    if(mut == NULL){
+        return OS_RET_NULL_PTR;
+    }
+    
     mut->lock = MutexLock();
 
     return OS_RET_OK;
 }
 
 int os_mut_entry(os_mut_t *mut, uint32_t timeout_ms){
+
+    if(mut == NULL){
+        return OS_RET_NULL_PTR;
+    }
 
     if(timeout_ms == 0){
         if (mut->lock.tryLock() == MUTEX_ACQUIRE_SUCESS){
@@ -27,15 +35,27 @@ int os_mut_entry(os_mut_t *mut, uint32_t timeout_ms){
 }
 
 int os_mut_count(os_mut_t *mut){
+    if(mut == NULL){
+        return OS_RET_NULL_PTR;
+    }
+
     return mut->lock.getState();
 }
 
 int os_mut_entry_wait_indefinite(os_mut_t *mut){
+    if(mut == NULL){
+        return OS_RET_NULL_PTR;
+    }
+
     mut->lock.lockWaitIndefinite();
     return OS_RET_OK;
 }
 
 int os_mut_exit(os_mut_t *mut){
+    if(mut == NULL){
+        return OS_RET_NULL_PTR;
+    }
+
     mut->lock.unlock();
     return OS_RET_OK;
 }
