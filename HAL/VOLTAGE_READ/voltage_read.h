@@ -2,7 +2,7 @@
 #define _VOLTAGE_READ_H
 
 // So we can configure modules
-#include "../../enabled_modules.h"
+#include "enabled_modules.h"
 
 #ifdef VOLTAGE_READ_MODULE
 

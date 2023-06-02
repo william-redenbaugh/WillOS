@@ -2,7 +2,7 @@
 #define _APA102_HPP
 
 // So we can configure modules
-#include "../../enabled_modules.h"
+#include "enabled_modules.h"
 
 #ifdef APA102_MODULE
 

@@ -1,7 +1,7 @@
 #ifndef _OSSERIAL_H
 #define _OSSERIAL_H
 
-#include "../../enabled_modules.h"
+#include "enabled_modules.h"
 #ifdef SERIAL_MODULE
 
 #include <Arduino.h> 

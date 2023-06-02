@@ -13,3 +13,6 @@
 [submodule "MODULES/TeensyOSIPC"]
 	path = MODULES/TeensyOSIPC
 	url = git@github.com:william-redenbaugh/TeensyOSIPC.git
+[submodule "CSAL/CSAL_SHARED"]
+	path = CSAL/CSAL_SHARED
+	url = git@github.com:william-redenbaugh/CSAL_SHARED.git

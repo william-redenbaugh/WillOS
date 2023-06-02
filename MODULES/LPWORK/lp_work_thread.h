@@ -2,7 +2,7 @@
 #define _LP_WORK_THREAD_H
 
 // So we can configure modules
-#include "../../enabled_modules.h"
+#include "enabled_modules.h"
 
 #ifdef LPWORK_MODULE
 

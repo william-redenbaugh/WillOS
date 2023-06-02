@@ -1,5 +1,5 @@
 #include "os_gpio.h"
-#include "CSAL/os_error.h"
+#include "CSAL/CSAL_SHARED/os_error.h"
 #include "pins_arduino_digital.h"
 #include "stdlib.h"
 #include "wiring_constants.h"

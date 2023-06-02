@@ -1,5 +1,5 @@
 #include "os_queue.h"
-#include "os_error.h"
+#include "CSAL/CSAL_SHARED/os_error.h"
 
 inline void push_element(os_queue_t *queue, void *data){
     queue->data[queue->head] = data;

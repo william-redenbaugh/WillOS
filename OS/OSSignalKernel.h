@@ -2,7 +2,7 @@
 #define _OSMESSAGEKERNEL_H
 
 // So we can configure modules
-#include "../enabled_modules.h"
+#include "enabled_modules.h"
 #ifdef SIGNALING_MODULE
 
 #include "OSThreadKernel.h"

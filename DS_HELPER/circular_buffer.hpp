@@ -1,7 +1,7 @@
 #ifndef _CIRCULAR_BUFFER_H
 #define _CIRCULAR_BUFFER_H
 
-#include "../enabled_modules.h"
+#include "enabled_modules.h"
 
 #ifdef CIRCULAR_BUFFER_STRING_MODULE
 

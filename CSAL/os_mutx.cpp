@@ -1,4 +1,4 @@
-#include "os_error.h"
+#include "CSAL_SHARED/os_error.h"
 #include "os_mutx.h"
 
 int os_mut_init(os_mut_t *mut){
@@ -8,6 +8,15 @@ int os_mut_init(os_mut_t *mut){
     
     mut->lock = MutexLock();
 
+    return OS_RET_OK;
+}
+
+int os_mut_try_entry(os_mut_t *mut){
+
+    return OS_RET_OK;
+}
+
+int os_mut_deinit(os_mut_t *mut){
     return OS_RET_OK;
 }
 

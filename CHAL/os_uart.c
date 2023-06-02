@@ -3,7 +3,7 @@
 #include "stdint.h"
 
 #include "os_uart.h"
-#include "CSAL/os_error.h"
+#include "CSAL/CSAL_SHARED/os_error.h"
 
 int os_uart_begin(os_uart_t *uart){
     if(uart == NULL)

@@ -1,5 +1,5 @@
 #include "os_adc.h"
-#include "CSAL/os_error.h"
+#include "CSAL/CSAL_SHARED/os_error.h"
 #include "stdlib.h"
 #include "wiring_constants.h"
 #include "pins_arduino_analog.h"

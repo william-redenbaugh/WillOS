@@ -2,7 +2,7 @@
 #define _OS_SETBITS_H
 
 #include "OS/OSSignalKernel.h"
-#include "os_error.h"
+#include "CSAL/CSAL_SHARED/os_error.h"
 
 typedef struct os_setbits_t{
     OSSignal signal;

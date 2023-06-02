@@ -1,7 +1,7 @@
 #ifndef _BINARY_SEARCH_TREE_HPP
 #define _BINARY_SEARCH_TREE_HPP
 
-#include "../enabled_modules.h"
+#include "enabled_modules.h"
 
 #ifdef BINARY_SEARCH_TREE_MODULE
 

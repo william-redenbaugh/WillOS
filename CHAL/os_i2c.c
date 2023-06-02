@@ -1,5 +1,5 @@
 #include "os_i2c.h"
-#include "CSAL/os_error.h"
+#include "CSAL/CSAL_SHARED/os_error.h"
 
 int os_i2c_begin(os_i2c_t *i2c){
     if(i2c == NULL)

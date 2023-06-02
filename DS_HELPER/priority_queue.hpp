@@ -1,7 +1,7 @@
 #ifndef _PRIORITY_QUEUE_HPP
 #define _PRIORITY_QUEUE_HPP
 
-#include "../enabled_modules.h"
+#include "enabled_modules.h"
 #include <Arduino.h>
 #include "fast_malloc.hpp"
 

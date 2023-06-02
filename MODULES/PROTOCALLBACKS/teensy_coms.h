@@ -2,7 +2,7 @@
 #define _TEENSY_COMS_H
 
 // So we can configure modules
-#include "../../enabled_modules.h"
+#include "enabled_modules.h"
 
 #ifdef PROTOCALLBACKS_MODULE
 

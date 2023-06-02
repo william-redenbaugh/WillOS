@@ -1,6 +1,5 @@
 #include "os_spi.h"
-#include "CSAL/os_error.h"
-
+#include "CSAL/CSAL_SHARED/os_error.h"
 
 os_spi_t spi_zero = {
     .fd = 0, 
