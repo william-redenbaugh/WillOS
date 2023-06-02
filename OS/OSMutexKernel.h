@@ -14,7 +14,8 @@
 */
 enum MutexLockState_t{
   MUTEX_UNLOCKED = 0,
-  MUTEX_LOCKED = 1
+  MUTEX_LOCKED = 1,
+  MUTEX_DEINIT = 2,
 };
 
 /*!

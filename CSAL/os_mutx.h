@@ -8,6 +8,9 @@ typedef struct os_mut_t{
     MutexLock lock;
 }os_mut_t;
 
+/**
+ * @brief Initializer for our mutex module
+*/
 int os_mut_init(os_mut_t *mut);
 
 /**

@@ -12,11 +12,23 @@ int os_mut_init(os_mut_t *mut){
 }
 
 int os_mut_try_entry(os_mut_t *mut){
+    if(mut == NULL){
+        return OS_RET_NULL_PTR;
+    }
 
-    return OS_RET_OK;
+    if(mut->lock.tryLock() == MUTEX_ACQUIRE_SUCESS){
+        return OS_RET_OK;
+    }
+    else{
+        return OS_RET_DEADLOCK;
+    }
 }
 
 int os_mut_deinit(os_mut_t *mut){
+    if(mut == NULL){
+        return OS_RET_NULL_PTR;
+    }
+    // STUBBY
     return OS_RET_OK;
 }
 
