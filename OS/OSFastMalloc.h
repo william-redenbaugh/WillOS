@@ -13,34 +13,37 @@
 #ifndef OS_FAST_MALLOC_MODULE
 
 /*!
-*   @brief The mutex that will allow our fast mallocs to be threadsafe!
-*/
+ *   @brief The mutex that will allow our fast mallocs to be threadsafe!
+ */
 static MutexLock fast_malloc_mutex;
 
 /*!
-*   @brief Mutex wrapper that allows our fast mallocs to be threadsafe!
-*   @param size_t (size of item we want to malloc)
-*/
-void *os_fast_malloc(size_t size){
+ *   @brief Mutex wrapper that allows our fast mallocs to be threadsafe!
+ *   @param size_t (size of item we want to malloc)
+ */
+void *os_fast_malloc(size_t size)
+{
     fast_malloc_mutex.lockWaitIndefinite();
     void *ptr = fast_malloc(size);
     fast_malloc_mutex.unlock();
 }
 
 /*!
-*   @brief Mutex wrapper that allows our fast free-heaps to be threadsafe!
-*   @param void *ptr
-*/
-void *os_fast_malloc_free(void *ptr){
+ *   @brief Mutex wrapper that allows our fast free-heaps to be threadsafe!
+ *   @param void *ptr
+ */
+void *os_fast_malloc_free(void *ptr)
+{
     fast_malloc_mutex.lockWaitIndefinite();
     fast_malloc_free(ptr);
     fast_malloc_mutex.unlock();
 }
 
 /*!
-*   @return size of the referenced block
-*/
-uint16_t os_fast_malloc_block_size(void *ptr){
+ *   @return size of the referenced block
+ */
+uint16_t os_fast_malloc_block_size(void *ptr)
+{
     fast_malloc_mutex.lockWaitIndefinite();
     register uint16_t ret = fast_malloc_memblock_size(ptr);
     fast_malloc_mutex.unlock();

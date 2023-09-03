@@ -3,46 +3,49 @@
 #ifdef SIGNALING_MODULE
 
 /*!
-*   @brief Signals a bit
-*   @param thread_signal_t which signal we are setting
-*/
-void OSSignal::signal(thread_signal_t thread_signal){
+ *   @brief Signals a bit
+ *   @param thread_signal_t which signal we are setting
+ */
+void OSSignal::signal(thread_signal_t thread_signal)
+{
     int state = os_stop();
     this->bits |= (1 << (uint32_t)thread_signal);
     os_start(state);
 }
 
 /*!
-*   @brief clears a bit
-*   @param thread_signal_t which signal we are clearing
-*/
-void OSSignal::clear(thread_signal_t thread_signal){
+ *   @brief clears a bit
+ *   @param thread_signal_t which signal we are clearing
+ */
+void OSSignal::clear(thread_signal_t thread_signal)
+{
     int state = os_stop();
     this->bits &= ~(1 << (uint32_t)thread_signal);
     os_start(state);
 }
 
 /*!
-*   @brief Checks to see if a bit is cleared or set
-*   @param thread_signal_t which bit we want to check
-*   @returns The status of the signal we are checking
-*/
-bool OSSignal::check(thread_signal_t thread_signal){
-    if(OS_CHECK_BIT(this->bits, (uint32_t)thread_signal))
+ *   @brief Checks to see if a bit is cleared or set
+ *   @param thread_signal_t which bit we want to check
+ *   @returns The status of the signal we are checking
+ */
+bool OSSignal::check(thread_signal_t thread_signal)
+{
+    if (OS_CHECK_BIT(this->bits, (uint32_t)thread_signal))
         return true;
     return false;
 }
 
-
 /*!
-*   @brief Checks to see if a bit is cleared or set
-*   @param thread_signal_t which bit we want to check
-*   @param uint32_t timeout_ms timeout or max time we are willing to wait for bits to clear
-*   @returns whether or or not we we able to get set bits or not
-*/
-bool OSSignal::wait(thread_signal_t thread_signal, uint32_t timeout_ms){
+ *   @brief Checks to see if a bit is cleared or set
+ *   @param thread_signal_t which bit we want to check
+ *   @param uint32_t timeout_ms timeout or max time we are willing to wait for bits to clear
+ *   @returns whether or or not we we able to get set bits or not
+ */
+bool OSSignal::wait(thread_signal_t thread_signal, uint32_t timeout_ms)
+{
     // Checking case immediatly.
-    if(OS_CHECK_BIT(this->bits, (uint32_t)thread_signal))
+    if (OS_CHECK_BIT(this->bits, (uint32_t)thread_signal))
         return true;
 
     // Stop the operating system so we can make changes to the thread.
@@ -65,7 +68,7 @@ bool OSSignal::wait(thread_signal_t thread_signal, uint32_t timeout_ms){
     _os_yield();
 
     // If were able to get access to the signal
-    if(OS_CHECK_BIT(this->bits, (uint32_t)thread_signal))
+    if (OS_CHECK_BIT(this->bits, (uint32_t)thread_signal))
         return true;
 
     // Otherwise we weren't able to
@@ -73,14 +76,16 @@ bool OSSignal::wait(thread_signal_t thread_signal, uint32_t timeout_ms){
 }
 
 /*!
-*   @brief Checks to see if a bit is cleared or set. If bit was set, then we cleared it.
-*   @param thread_signal_t which bit we want to check
-*   @param uint32_t timeout_ms timeout or max time we are willing to wait for bits to clear
-*   @returns whether or or not we we able to get set bits or not
-*/
-bool OSSignal::wait_n_clear(thread_signal_t thread_signal, uint32_t timeout_ms){
+ *   @brief Checks to see if a bit is cleared or set. If bit was set, then we cleared it.
+ *   @param thread_signal_t which bit we want to check
+ *   @param uint32_t timeout_ms timeout or max time we are willing to wait for bits to clear
+ *   @returns whether or or not we we able to get set bits or not
+ */
+bool OSSignal::wait_n_clear(thread_signal_t thread_signal, uint32_t timeout_ms)
+{
     // We waited, and eventually the signal worked out for us
-    if(this->wait(thread_signal, timeout_ms)){
+    if (this->wait(thread_signal, timeout_ms))
+    {
         this->clear(thread_signal);
         return true;
     }
@@ -90,12 +95,13 @@ bool OSSignal::wait_n_clear(thread_signal_t thread_signal, uint32_t timeout_ms){
 }
 
 /*!
-*   @brief Waits for bits to be set indefinitly
-*   @param thread_signal_t thread_signal to be sete
-*/
-void OSSignal::wait_notimeout(thread_signal_t thread_signal){
+ *   @brief Waits for bits to be set indefinitly
+ *   @param thread_signal_t thread_signal to be sete
+ */
+void OSSignal::wait_notimeout(thread_signal_t thread_signal)
+{
     // Checking case immediatly.
-    if(OS_CHECK_BIT(this->bits, (uint32_t)thread_signal))
+    if (OS_CHECK_BIT(this->bits, (uint32_t)thread_signal))
         return;
 
     // Stop the operating system so we can make changes to the thread.
@@ -117,9 +123,10 @@ void OSSignal::wait_notimeout(thread_signal_t thread_signal){
 }
 
 /*!
-*   @returns The raw bits that we are using
-*/
-uint32_t OSSignal::bits_return(void){
+ *   @returns The raw bits that we are using
+ */
+uint32_t OSSignal::bits_return(void)
+{
     return this->bits;
 }
 #endif
