@@ -64,7 +64,7 @@ void *PriorityQueuePointerNaive::pop(void)
         return NULL;
 
     // Popping off data from the pointer
-    register void *ptr = this->head->ptr;
+    void *ptr = this->head->ptr;
     PriorityQueueNaiveNode *next_node = this->head->next;
 
 // Free up in memory.
@@ -86,7 +86,7 @@ void *PriorityQueuePointerNaive::peek_top(void)
 {
     if (this->head == NULL)
         return NULL;
-    register void *ptr = this->head->ptr;
+    void *ptr = this->head->ptr;
     return ptr;
 }
 
