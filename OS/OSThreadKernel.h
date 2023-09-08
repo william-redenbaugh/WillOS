@@ -554,6 +554,13 @@ bool os_signal_thread(thread_signal_t thread_signal, os_thread_id_t target_threa
  */
 bool os_signal_thread_clear(thread_signal_t thread_signal, os_thread_id_t target_thread_id);
 
+/**
+ * @brief When we want to get the pointer to the datastruct of the thread from the thread ID
+ * @param os_thread_id_t
+ * @return thread_id_t
+ */
+thread_t *os_get_indexed_thread(os_thread_id_t thread_id);
+
 /*!
  * @brief We can check if there are bits that are signaled
  * @param which bits we want to check,

@@ -817,6 +817,20 @@ bool os_signal_thread(thread_signal_t thread_signal, os_thread_id_t target_threa
   return false;
 }
 
+/**
+ * @brief When we want to get the pointer to the datastruct of the thread from the thread ID
+ * @param os_thread_id_t
+ * @return thread_id_t
+ */
+thread_t *os_get_indexed_thread(os_thread_id_t thread_id)
+{
+  if (thread_id < thread_count)
+  {
+    return &system_threads[thread_id];
+  }
+  return NULL;
+}
+
 /*!
  * @brief Allows us to send signals to each thread by clearing a bitmask
  * @note This uses preset flags to allow us to set and clear clags in a thread
