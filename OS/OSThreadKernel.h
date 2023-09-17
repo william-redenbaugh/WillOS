@@ -362,6 +362,12 @@ extern "C"
  */
 extern "C" void _os_yield(void);
 
+/**
+ * @brief Idle thread handler.
+ * @note Whenever the OS doesn't have anything to do, we check stuff here.
+ */
+void idle_thread_handler(void *paramters);
+
 #if defined(STM32F407xx) || defined(STM32F767xx)
 /*!
  * @brief Helper function that provides clarity as to how system works.

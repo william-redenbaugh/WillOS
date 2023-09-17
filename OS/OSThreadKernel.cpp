@@ -11,13 +11,13 @@
  * @brief Thread that calculates remainder stuff.
  * @param void *params
  */
-static void remainder_thread(void *params);
+void idle_thread_handler(void *params);
 
 /*!
  * @brief Remaind thread stack space and statically allocated array
  */
-static const int remainder_thread_stack_space = 256;
-uint8_t remainder_thread_stack[remainder_thread_stack_space];
+static const int idle_thread_handler_stack_space = 256;
+uint8_t idle_thread_handler_stack[idle_thread_handler_stack_space];
 
 /*!
  *   @brief Current thread that we have context of.
@@ -378,7 +378,7 @@ void threads_init(void)
   // current_use_systick = 0; // disable Systick calls
   // t4_gpt_init(200);       // tick every millisecond
 #endif
-  os_add_thread(&remainder_thread, NULL, 0, remainder_thread_stack_space, remainder_thread_stack);
+  os_add_thread(&idle_thread_handler, NULL, 0, idle_thread_handler_stack_space, idle_thread_handler_stack);
 
 // If we want the void loop thread to still work
 #if defined(ARDUINO_LOOP_THREAD)
@@ -910,18 +910,6 @@ void os_thread_waitbits_notimeout(thread_signal_t thread_signal)
   {
     if (os_thread_checkbits(thread_signal) == THREAD_SIGNAL_SET)
       return;
-    _os_yield();
-  }
-}
-
-/*!
- * @brief Thread that calculates remainder stuff, and sits around
- * @param void *params
- */
-static void remainder_thread(void *params)
-{
-  for (;;)
-  {
     _os_yield();
   }
 }
